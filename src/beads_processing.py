@@ -315,6 +315,8 @@ def process_bead(beads_path_list, bgst=True):
             center_b = np_round(ndi_center_of_mass(b_bead), 3) + [x - 1, y - 1] + [0.5, 0.5]
             center_mass.append([center_r, center_g, center_b])
     center_mass = np_array(center_mass)
+    if center_mass.shape[0] == 0:
+        raise Exception("Beads not found.")
     X_red = np_array(center_mass[:, 0, :])
     X_green = np_array(center_mass[:, 1, :])
     Y_x_green = np_array(center_mass[:, 0, 0] - center_mass[:, 1, 0])
