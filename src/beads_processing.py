@@ -251,6 +251,7 @@ def process_bead(beads_path_list, bgst=True):
     bead_r = cv2_imread(bead_path_r, -1)
     bead_g = cv2_imread(bead_path_g, -1)
     bead_b = cv2_imread(bead_path_b, -1)
+    image_shape = bead_r.shape
     if not bgst:
         bead_r_bgst = sub_mean(bead_r)
         bead_g_bgst = sub_mean(bead_g)
@@ -355,4 +356,4 @@ def process_bead(beads_path_list, bgst=True):
                                'green_x': X_green[:, 0] + pred_x_green,
                                'blue_y': X_blue[:, 1] + pred_y_blue,
                                'blue_x': X_blue[:, 0] + pred_x_blue})
-    return lr_x_blue, lr_y_blue, lr_x_green, lr_y_green, beads_df, pred_beads
+    return lr_x_blue, lr_y_blue, lr_x_green, lr_y_green, beads_df, pred_beads, image_shape
