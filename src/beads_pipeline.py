@@ -1,24 +1,32 @@
 import logging
 
 from PyQt5.QtCore import (pyqtSignal as Signal, QObject, QThread)
-
+from os.path import (split as os_path_split, join as os_path_join, exists as os_path_exists,
+                     splitext as os_path_splitext)
 from src.beads_processing import train_beads, process_bead
 from pandas import (DataFrame as pd_DataFrame, read_csv as pd_read_csv)
 from numpy import (array as np_array, round as np_round)
+from utils import write_csv
 
 
 class Correction(QObject):
     append_text = Signal(str)
-    beads_finished = Signal(int)
-    aberration_finished = Signal(int)
+    train_beads_finished = Signal(int)
+    correction_finished = Signal(int)
+    save_correction_finished = Signal(int)
 
-    def __init__(self, logger: logging.Logger, path_list: list):
+    def __init__(self, logger: logging.Logger, path_list: list, lr_model: list):
+        super().__init__()
         self.logger = logger
         self.beads_red_path = path_list[0]
         self.beads_green_path = path_list[1]
         self.beads_blue_path = path_list[2]
         self.beads_csv_path = path_list[3]
         self.target_csv_path_list = path_list[4].split(";")
+        self.logger.info("Beads red path: {}".format(self.beads_red_path))
+        self.logger.info("Beads green path: {}".format(self.beads_green_path))
+        self.logger.info("Beads blue path: {}".format(self.beads_blue_path))
+        self.logger.info("Target center of mass csv path: {}".format(path_list[4]))
 
         self.lr_model = None
         self.beads_vector = None
@@ -31,13 +39,16 @@ class Correction(QObject):
                 self.beads_vector = [beads_df, pred_beads]
             else:
                 beads_tif_path_list = [self.beads_red_path, self.beads_green_path, self.beads_blue_path]
-                lr_x_blue, lr_y_blue, lr_x_green, lr_y_green, beads_df, pred_beads = process_bead(beads_tif_path_list,
-                                                                                                  True)
+                lr_x_blue, lr_y_blue, lr_x_green, lr_y_green, beads_df, pred_beads, img_shape = process_bead(
+                    beads_tif_path_list, False)
+                self.img_shape = img_shape
                 self.lr_model = [lr_x_blue, lr_y_blue, lr_x_green, lr_y_green]
                 self.beads_vector = [beads_df, pred_beads]
         except Exception as e:
-            self.logger.error("{}".format(e))
-            self.append_text.emit("Error: {}".format(e))
+            msg = "Error when train the beads model: {}.".format(e)
+            raise Exception(msg)
+            # self.logger.error("{}".format(e))
+            # self.append_text.emit("Error: {}".format(e))
         else:
             msg = "Train the chromatic shift model sucessfully. Show the beads vector maps."
             self.logger.info(msg)
