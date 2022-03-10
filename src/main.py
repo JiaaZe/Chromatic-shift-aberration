@@ -156,23 +156,21 @@ class MainWindow(QMainWindow):
                 self.thread.terminate()
             self.thread = QThread(self)
             self.logger.info('start doing stuff in: {}'.format(QThread.currentThread()))
-            self.aberration = Correction(self.logger, path_list)
-            self.aberration.moveToThread(self.thread)
-            self.start_backgroung_work.connect(self.aberration.pipeline)
+            self.correction = Correction(self.logger, path_list, self.old_lr_model)
+            self.correction.moveToThread(self.thread)
+            self.start_backgroung_work.connect(self.correction.pipeline)
 
-            self.aberration.append_text.connect(self.update_message)
-            self.aberration.beads_finished.connect(self.show_vector_map)
-            self.aberration.aberration_finished.connect(self.save_shifted_cm)
+            self.correction.append_text.connect(self.update_message)
+            self.correction.train_beads_finished.connect(self.show_vector_map)
+            # self.correction.correction_finished.connect(self.save_shifted_centerOfMass)
 
             self.thread.start()
             self.start_backgroung_work.emit()
+
+            self.old_path_list = path_list
         except Exception as e:
             self.logger.error("{}".format(e))
-            self.ui.textbrowser_process.append("{}".format(e))
-        else:
-            msg = "Pipeline finished."
-            self.logger.info(msg)
-            self.ui.textbrowser_process.append(msg)
+            self.update_message("{}".format(e))
 
     def update_message(self, text):
         self.ui.textbrowser_process.append(text)
