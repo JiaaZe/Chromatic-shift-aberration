@@ -177,6 +177,24 @@ class MainWindow(QMainWindow):
     def update_message(self, text):
         self.ui.textbrowser_process.append(text)
 
+    def open_red_file(self):
+        open_file_dialog(self.ui.beads_red_path, mode=2, filetype_list=["tif"])
+
+    def open_green_file(self):
+        open_file_dialog(self.ui.beads_green_path, mode=2, filetype_list=["tif"])
+
+    def open_blue_file(self):
+        open_file_dialog(self.ui.beads_blue_path, mode=2, filetype_list=["tif"])
+
+    def open_beads_csv_file(self):
+        open_file_dialog(self.ui.beads_csv_path, mode=2, filetype_list=["csv", "xlsx", "xls"])
+
+    def open_target_file(self):
+        open_file_dialog(self.ui.target_csv_path, mode=3, filetype_list=["csv", "xlsx", "xls"])
+
+    def clear_target_csv_path(self):
+        self.ui.target_csv_path.clear()
+
     def show_vector_map(self):
         ...
 
