@@ -116,14 +116,42 @@ class MainWindow(QMainWindow):
         self.ui.textbrowser_process.clear()
 
     def start_pipeline(self):
-        beads_red_path = self.ui.beads_red_path
-        beads_green_path = self.ui.beads_green_path
-        beads_blue_path = self.ui.beads_blue_path
-        beads_csv_path = self.ui.beads_csv_path
-        target_cm_path = self.ui.target_csv_path
-        path_list = [beads_red_path, beads_green_path, beads_blue_path, beads_csv_path, target_cm_path]
-
         try:
+            msg = "[{}]===========Start pipeline============".format(
+                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+            self.logger.info(msg)
+            self.update_message(msg)
+
+            beads_red_path = self.ui.beads_red_path.text()
+            beads_green_path = self.ui.beads_green_path.text()
+            beads_blue_path = self.ui.beads_blue_path.text()
+            beads_csv_path = self.ui.beads_csv_path.text()
+            target_cm_path = self.ui.target_csv_path.text()
+            if len(beads_csv_path) > 0:
+                msg = "Using beads csv file to train the model."
+                self.logger.info(msg)
+                self.update_message(msg)
+            elif len(beads_red_path) > 0 and len(beads_green_path) > 0 and len(beads_blue_path) > 0:
+                msg = "Using beads images to train the model."
+                self.logger.info(msg)
+                self.update_message(msg)
+            else:
+                msg = "Invalid path."
+                raise Exception(msg)
+            path_list = [beads_red_path, beads_green_path, beads_blue_path, beads_csv_path, target_cm_path]
+
+            # reuse the old beads lr model
+            if self.old_path_list != path_list:
+                self.reuse = False
+                self.old_lr_model = None
+                self.old_beads_vector = None
+
+                self.ui.scroll_beads_content = QtWidgets.QWidget()
+                self.ui.scroll_beads.setWidget(self.ui.scroll_beads_content)
+                self.ui.btn_save_beads_map.setDisabled(True)
+            else:
+                self.reuse = True
+
             if self.thread is not None:
                 self.thread.terminate()
             self.thread = QThread(self)
