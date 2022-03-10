@@ -62,33 +62,37 @@ class Correction(QObject):
             self.append_text.emit(msg)
 
     def shift_centerOfMass(self):
-        df_target_list = []
+        corrected_list = []
         lr_x_blue, lr_y_blue, lr_x_green, lr_y_green = self.lr_model
         try:
             for csv in self.target_csv_path_list:
+                if len(csv) == 0:
+                    continue
                 df_target = pd_read_csv(csv, names=['red_y', 'red_x', 'green_y', 'green_x', 'blue_y', 'blue_x'])
                 r_centroid = np_array(df_target.loc[:, ['red_x', 'red_y']])
                 g_centroid = np_array(df_target.loc[:, ['green_x', 'green_y']])
                 b_centroid = np_array(df_target.loc[:, ['blue_x', 'blue_y']])
 
-                pred_x_blue = lr_x_blue.predict([b_centroid])
-                pred_y_blue = lr_y_blue.predict([b_centroid])
+                pred_x_blue = lr_x_blue.predict(b_centroid)
+                pred_y_blue = lr_y_blue.predict(b_centroid)
 
-                pred_x_green = lr_x_green.predict([g_centroid])
-                pred_y_green = lr_y_green.predict([g_centroid])
+                pred_x_green = lr_x_green.predict(g_centroid)
+                pred_y_green = lr_y_green.predict(g_centroid)
 
-                r_new = np_array((r_centroid[1], r_centroid[0])).reshape(2)
-                g_new = np_round((g_centroid[1] + pred_y_green, g_centroid[0] + pred_x_green), 5).reshape(2)
-                b_new = np_round((b_centroid[1] + pred_y_blue, b_centroid[0] + pred_x_blue), 5).reshape(2)
+                g_new = np_round([g_centroid[:, 0] + pred_x_green, g_centroid[:, 1] + pred_y_green], 5).transpose()
+                b_new = np_round([b_centroid[:, 0] + pred_x_blue, b_centroid[:, 1] + pred_y_blue], 5).transpose()
 
-                df_target_list.append([r_new, g_new, b_new])
+                corrected_list.append([r_centroid, g_new, b_new])
         except Exception as e:
-            self.logger.error("{}".format(e))
-            self.append_text.emit("Error: {}".format(e))
+            msg = "Error when correct the target center of mass: {}".format(e)
+            raise Exception(msg)
+            # self.logger.error("{}".format(e))
+            # self.append_text.emit("Error: {}".format(e))
         else:
             msg = "Correct the center of mass sucessfully."
             self.logger.info(msg)
             self.append_text.emit(msg)
+        return corrected_list
 
     def pipeline(self):
         self.train_model()
