@@ -11,7 +11,15 @@ from beads_pipeline import Correction
 config_file = "config.ini"
 
 
-def open_file_dialog(lineEdit: QLineEdit, mode=1, filetype="", folder=""):
+
+def open_file_dialog(lineEdit: QLineEdit, mode=1, filetype_list=[], folder=""):
+    """
+    :param lineEdit:
+    :param mode: 1. multiple directories, 2.single file, 3. multiple fils.
+    :param filetype_list:
+    :param folder: default open folder.
+    :return:
+    """
     fileDialog = QFileDialog()
     if len(folder) > 0:
         fileDialog.setDirectory(folder)
