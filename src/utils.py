@@ -30,19 +30,8 @@ def get_logger(log_path):
     return logger
 
 
-def read_tif(path, IMG_HEIGHT, IMG_WIDTH):
-    img = cv2_imread(path, -1)
-    h, w = img.shape
-    h_expand = IMG_HEIGHT - h
-    w_expand = IMG_WIDTH - w
-    if h_expand + w_expand > 0:
-        new_img = np_zeros((IMG_HEIGHT, IMG_WIDTH))
-        new_img[0:h, 0:w] = img
-        new_img[h + h_expand:, :w] = img[h - h_expand:h, :][::-1, :]
-        new_img[:, -w_expand:] = new_img[:, -w_expand * 2:-w_expand][:, ::-1]
-        img = new_img
-    return img
-
-
-def write_csv():
-    ...
+def write_csv(path, data, header):
+    if header is not None and len(header) > 0 and len(header) != data.shape[1]:
+        raise Exception("Header length incompatible with data length.")
+    df = pd_DataFrame(columns=header, data=data)
+    df.to_csv(path, index=False, header=False)
