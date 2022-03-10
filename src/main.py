@@ -1,15 +1,23 @@
+import time
 from sys import (exit as sys_exit, argv as sys_argv)
 
-from PyQt5.QtCore import QThread
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QAbstractItemView, QTreeView, QListView, QLineEdit
+from PyQt5 import QtWidgets
+
 from ui.MainWindow import Ui_MainWindow
-from os.path import (exists as os_path_exists)
-from os import (mkdir as os_mkdir)
-import utils
 from beads_pipeline import Correction
+import utils
 
-config_file = "config.ini"
+from PyQt5.QtCore import (QThread, pyqtSignal as Signal)
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QAbstractItemView, QTreeView, QListView, QLineEdit, \
+    QVBoxLayout, QWidget
+from pandas import (DataFrame as pd_DataFrame)
+from numpy import (arange as np_arange)
 
+from matplotlib.backends.backend_qtagg import (
+    FigureCanvasQTAgg as FigureCanvas)
+from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.figure import Figure
+from matplotlib.patches import Rectangle
 
 
 def open_file_dialog(lineEdit: QLineEdit, mode=1, filetype_list=[], folder=""):
@@ -68,17 +76,44 @@ def open_file_dialog(lineEdit: QLineEdit, mode=1, filetype_list=[], folder=""):
 
 
 class MainWindow(QMainWindow):
+    start_backgroung_work = Signal()
+
     def __init__(self):
         super().__init__()
 
-        self.logger = utils.get_logger("/Logs")
+        self.logger = utils.get_logger("./Logs")
         self.logger.info("\n==============================START==============================")
         self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
 
         self.thread = None
-        self.aberration = None
+        self.correction = None
+        self.old_path_list = None
+        self.old_lr_model = None
+        self.old_beads_vector = None
+        self.reuse = False
 
-        self.ui.btn_start.connecte(self.start_pipeline)
+        self.ui.btn_start.clicked.connect(self.start_pipeline)
+        self.ui.btn_red_browse.clicked.connect(self.open_red_file)
+        self.ui.btn_green_browse.clicked.connect(self.open_green_file)
+        self.ui.btn_blue_browse.clicked.connect(self.open_blue_file)
+        self.ui.btn_beadscsv_browse.clicked.connect(self.open_beads_csv_file)
+        self.ui.btn_target_csv_browser.clicked.connect(self.open_target_file)
+
+        self.ui.btn_csv_clear.clicked.connect(self.clear_target_csv_path)
+        self.ui.btn_save_beads_map.clicked.connect(self.save_beads_map)
+
+        # text change
+        self.ui.beads_red_path.textChanged.connect(self.handle_path_changed)
+        self.ui.beads_green_path.textChanged.connect(self.handle_path_changed)
+        self.ui.beads_blue_path.textChanged.connect(self.handle_path_changed)
+        self.ui.beads_csv_path.textChanged.connect(self.handle_path_changed)
+        self.ui.target_csv_path.textChanged.connect(self.handle_path_changed)
+
+        self.beads_vector_maps = None
+
+    def handle_path_changed(self):
+        self.ui.textbrowser_process.clear()
 
     def start_pipeline(self):
         beads_red_path = self.ui.beads_red_path
