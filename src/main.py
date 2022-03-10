@@ -412,8 +412,78 @@ class MainWindow(QMainWindow):
         bb_blue = bb_blue.transformed(subplot_axes[1, 1].transData.inverted())
         blue_width = bb_blue.xmax - bb_blue.xmin
 
-    def save_shifted_cm(self):
-        ...
+        if blue_width > green_width:
+            shift = bb_blue.x1 - bb_green.x1
+        else:
+            shift = 0
+
+        new_x0 = bb_blue.x0 - shift - text_height / 2
+        blue_text.set_x(new_x0)
+        green_text.set_x(new_x0)
+
+        bb_blue = blue_text.get_window_extent(renderer=r)
+        bb_blue = bb_blue.transformed(subplot_axes[1, 1].transData.inverted())
+        bb_green = green_text.get_window_extent(renderer=r)
+        bb_green = bb_green.transformed(subplot_axes[1, 1].transData.inverted())
+
+        max_width = max(blue_width, green_width)
+
+        title_shift = bb_title.x0 - text_height / 2 - bb_blue.x0
+        title_text.set_x(bb_title.x1 - title_shift / 2)
+        title_text.set_y(bb_title.y1 - text_height / 2)
+
+        count_text = subplot_axes[1, 1].text(bb_blue.x1, bb_blue.y0,
+                                             "n={}".format(len(scatter_df)), ha="right", va="top",
+                                             ma="center",
+                                             size=text_size)
+        bb_count = count_text.get_window_extent(renderer=r)
+        bb_count = bb_count.transformed(subplot_axes[1, 1].transData.inverted())
+
+        count_shift = bb_count.x0 - bb_blue.x0
+        count_text.set_x(bb_count.x1 - count_shift / 2)
+
+        bbox_shift = text_height / 3
+        bbox_xy = (bb_blue.x0 - text_height / 3, bb_count.y0)
+        bbox_width = max_width + 2 * bbox_shift
+        bbox_height = bb_title.y1 - bb_count.y0 - bbox_shift / 2
+
+        subplot_axes[1, 1].add_patch(
+            Rectangle(bbox_xy, bbox_width, bbox_height, fc=(1, 1, 1), ec=(0, 0, 0), lw=0.5, alpha=0.5))
+
+        subplot_axes[0, 0].set_aspect(1)
+        subplot_axes[0, 1].set_aspect(1)
+        subplot_axes[1, 0].set_aspect(1)
+        subplot_axes[1, 1].set_aspect(1)
+        plotLayout = QVBoxLayout()
+        self.beads_vector_maps = static_canvas
+        plotLayout.addWidget(static_canvas)
+        qfigWidget.setLayout(plotLayout)
+
+        static_canvas.setMinimumSize(static_canvas.size())
+
+        qScrollLayout.addWidget(qfigWidget)
+        self.ui.scroll_beads_content.setLayout(qScrollLayout)
+
+        self.ui.scroll_beads_content.show()
+        self.ui.btn_save_beads_map.setEnabled(True)
+
+    def save_beads_map(self):
+        try:
+            save_path, save_type = QFileDialog.getSaveFileName(self, "Save File", "./beads vector maps",
+                                                               'pdf (*.pdf);; png (*.png);;jpg (*.jpg)')
+            if save_type == "pdf (*.pdf)":
+                with PdfPages(save_path) as pdf:
+                    pdf.savefig(self.beads_vector_maps.figure, dpi=120)
+            else:
+                self.beads_maps.figure.savefig(save_path)
+        except Exception as e:
+            msg = "Error when save the beads vector maps: {}".format(e)
+            self.logger.error(e)
+            self.update_message(msg)
+        else:
+            msg = "Beads vector maps saved as {}".format(save_path)
+            self.logger.info(msg)
+            self.update_message(msg)
 
 
 # Main access
