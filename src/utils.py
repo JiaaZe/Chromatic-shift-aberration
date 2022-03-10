@@ -1,17 +1,18 @@
 import logging
 from logging.handlers import TimedRotatingFileHandler
-from cv2 import (imread as cv2_imread)
-from numpy import (zeros as np_zeros)
+from os.path import (exists as os_path_exists)
+from os import (mkdir as os_mkdir)
+from pandas import (DataFrame as pd_DataFrame)
 
 
 def get_logger(log_path):
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 
-    log_name = log_path + "logFile" + '.log'
+    log_name = log_path + "/logFile" + '.log'
     logfile = log_name
-    # if not os_path_exists(log_path):
-    #     os_mkdir(log_path)
+    if not os_path_exists(log_path):
+        os_mkdir(log_path)
 
     file_handler = TimedRotatingFileHandler(logfile, when='H', interval=3, backupCount=4, encoding='utf-8')
     file_handler.setLevel(logging.INFO)
