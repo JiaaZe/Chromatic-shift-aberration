@@ -194,7 +194,223 @@ class MainWindow(QMainWindow):
         self.ui.target_csv_path.clear()
 
     def show_vector_map(self):
-        ...
+        # get lr model list
+        self.old_lr_model = self.correction.lr_model
+
+        if self.reuse:
+            return
+        else:
+            beads_df, pred_beads = self.correction.get_beads_vector()
+
+        img_shape = self.correction.img_shape
+        arrow_df = pd_DataFrame({'diff_green_y': 100 * (beads_df['green_y'] - beads_df['red_y']),
+                                 'diff_green_x': 100 * (beads_df['green_x'] - beads_df['red_x']),
+                                 'diff_blue_y': 100 * (beads_df['blue_y'] - beads_df['red_y']),
+                                 'diff_blue_x': 100 * (beads_df['blue_x'] - beads_df['red_x']),
+                                 'pred_diff_green_y': 100 * (pred_beads['green_y'] - beads_df['red_y']),
+                                 'pred_diff_green_x': 100 * (pred_beads['green_x'] - beads_df['red_x']),
+                                 'pred_diff_blue_y': 100 * (pred_beads['blue_y'] - beads_df['red_y']),
+                                 'pred_diff_blue_x': 100 * (pred_beads['blue_x'] - beads_df['red_x'])})
+
+        qScrollLayout = QVBoxLayout(self.ui.scroll_beads_content)
+        qfigWidget = QWidget(self.ui.scroll_beads_content)
+
+        static_canvas = FigureCanvas(Figure(figsize=(7, 7)))
+        text_size = 6
+        r = static_canvas.get_renderer()
+
+        subplot_axes = static_canvas.figure.subplots(2, 2)
+        # static_canvas.figure.tight_layout()
+        # static_canvas.figure.subplots_adjust(hspace=0.3)
+        # 0,0 original arrow
+        subplot_axes[0, 0].title.set_text("original arrow")
+        subplot_axes[0, 0].title.set_size(10)
+
+        x_lim = (min(beads_df["red_x"].min(), (beads_df["red_x"] + arrow_df['diff_green_x']).min(),
+                     (beads_df["red_x"] + arrow_df['diff_blue_x']).min()) - 10,
+                 max(beads_df["red_x"].max(), (beads_df["red_x"] + arrow_df['diff_green_x']).max(),
+                     (beads_df["red_x"] + arrow_df['diff_blue_x']).max()) + 10)
+        y_lim = (min(beads_df["red_y"].min(), (beads_df["red_y"] + arrow_df['diff_green_y']).min(),
+                     (beads_df["red_y"] + arrow_df['diff_blue_y']).min()) - 10,
+                 max(beads_df["red_y"].max(), (beads_df["red_y"] + arrow_df['diff_green_y']).max(),
+                     (beads_df["red_y"] + arrow_df['diff_blue_y']).max()) + 10)
+        subplot_axes[0, 0].set_xlim(x_lim)
+
+        subplot_axes[0, 0].set_ylim(y_lim)
+
+        subplot_axes[0, 1].set_xlim(x_lim)
+
+        subplot_axes[0, 1].set_ylim(y_lim)
+
+        for index, row in beads_df.iterrows():
+            subplot_axes[0, 0].arrow(row['red_x'], row['red_y'], arrow_df.iloc[index]["diff_green_x"],
+                                     arrow_df.iloc[index]["diff_green_y"], color='green', head_width=6, lw=0.4)
+            subplot_axes[0, 0].arrow(row['red_x'], row['red_y'], arrow_df.iloc[index]["diff_blue_x"],
+                                     arrow_df.iloc[index]["diff_blue_y"], color='blue', head_width=6, lw=0.4)
+        subplot_axes[0, 0].add_patch(Rectangle((0, 0), img_shape[0], img_shape[1], fill=False, linewidth=1))
+        subplot_axes[0, 0].axis('off')
+
+        # 0,1 shifted arrow
+        subplot_axes[0, 1].title.set_text("shifted arrow")
+        subplot_axes[0, 1].title.set_size(10)
+        for index, row in pred_beads.iterrows():
+            subplot_axes[0, 1].arrow(row['red_x'], row['red_y'], arrow_df.iloc[index]["pred_diff_green_x"],
+                                     arrow_df.iloc[index]["pred_diff_green_y"], color='green', head_width=6, lw=0.4)
+            subplot_axes[0, 1].arrow(row['red_x'], row['red_y'], arrow_df.iloc[index]["pred_diff_blue_x"],
+                                     arrow_df.iloc[index]["pred_diff_blue_y"], color='blue', head_width=6, lw=0.4)
+        subplot_axes[0, 1].add_patch(Rectangle((0, 0), img_shape[0], img_shape[1], fill=False, linewidth=1))
+        subplot_axes[0, 1].axis('off')
+
+        # scattor
+        scatter_df = pd_DataFrame(
+            {'green_x': beads_df['green_x'] - beads_df['red_x'], 'green_y': beads_df['green_y'] - beads_df['red_y'],
+             'blue_x': beads_df['blue_x'] - beads_df['red_x'], 'blue_y': beads_df['blue_y'] - beads_df['red_y'],
+             'pred_green_x': pred_beads['green_x'] - pred_beads['red_x'],
+             'pred_green_y': pred_beads['green_y'] - pred_beads['red_y'],
+             'pred_blue_x': pred_beads['blue_x'] - pred_beads['red_x'],
+             'pred_blue_y': pred_beads['blue_y'] - pred_beads['red_y']})
+        scatter_df = scatter_df.apply(lambda x: 67 * x)
+
+        # 1,0 original related
+        subplot_axes[1, 0].title.set_text("original related")
+        subplot_axes[1, 0].title.set_size(10)
+        x_max = max(abs(min(scatter_df[["green_x", "blue_x"]].min())), max(scatter_df[["green_x", "blue_x"]].max()))
+        y_max = max(abs(min(scatter_df[["green_y", "blue_y"]].min())), max(scatter_df[["green_y", "blue_y"]].max()))
+        lim = max(x_max, y_max)
+        if lim % 10 != 0:
+            lim = (int(lim / 10) + 1) * 10
+        xy_lim = (-lim, lim)
+        xy_ticks = np_arange(-lim, lim + 10, 10)
+        xy_labels = [xy_ticks[i] if i % 2 == 0 else " " for i in range(len(xy_ticks))]
+        subplot_axes[1, 0].set_xlim(xy_lim)
+        subplot_axes[1, 0].set_ylim(xy_lim)
+        subplot_axes[1, 0].set_xticks(xy_ticks, xy_labels)
+        subplot_axes[1, 0].set_yticks(xy_ticks, xy_labels)
+        subplot_axes[1, 0].scatter(scatter_df["green_x"], scatter_df["green_y"], c='g', s=5, alpha=0.4)
+        subplot_axes[1, 0].scatter(scatter_df["blue_x"], scatter_df["blue_y"], c='b', s=5, alpha=0.4)
+        subplot_axes[1, 0].axvline(c="black", lw=1)
+        subplot_axes[1, 0].axhline(c="black", lw=1)
+        subplot_axes[1, 0].spines['top'].set_visible(False)
+        subplot_axes[1, 0].spines['right'].set_visible(False)
+        subplot_axes[1, 0].set_xlabel("x position of center (nm)")
+        subplot_axes[1, 0].set_ylabel("y position of center (nm)")
+
+        # box information
+        title_text = subplot_axes[1, 0].text(lim, lim, "mean±SD", ha="right", va="top", ma="center",
+                                             size=text_size)
+        bb_title = title_text.get_window_extent(renderer=r)
+        bb_title = bb_title.transformed(subplot_axes[1, 0].transData.inverted())
+
+        text_height = bb_title.ymax - bb_title.ymin
+
+        green_text = subplot_axes[1, 0].text(bb_title.x1, bb_title.y0 - text_height / 2,
+                                             "X={:<2.1f}±{:<2.1f} nm\nY={:<2.1f}±{:<2.1f} nm".format(
+                                                 scatter_df['green_x'].mean(),
+                                                 scatter_df['green_x'].std(),
+                                                 scatter_df['green_y'].mean(),
+                                                 scatter_df['green_y'].std()),
+                                             ha="right", va="top", ma="left", size=text_size, c='g')
+        bb_green = green_text.get_window_extent(renderer=r)
+        bb_green = bb_green.transformed(subplot_axes[1, 0].transData.inverted())
+        green_text.set_ha("left")
+        green_width = bb_green.xmax - bb_green.xmin
+
+        blue_text = subplot_axes[1, 0].text(bb_green.x0, bb_green.y0,
+                                            "X={:<2.1f}±{:<2.1f} nm\nY={:<2.1f}±{:<2.1f} nm".format(
+                                                scatter_df['blue_x'].mean(),
+                                                scatter_df['blue_x'].std(),
+                                                scatter_df['blue_y'].mean(),
+                                                scatter_df['blue_y'].std()),
+                                            ha="left", va="top", ma="left", size=text_size, c='b')
+        bb_blue = blue_text.get_window_extent(renderer=r)
+        bb_blue = bb_blue.transformed(subplot_axes[1, 0].transData.inverted())
+        blue_width = bb_blue.xmax - bb_blue.xmin
+
+        max_width = max(blue_width, green_width)
+
+        if blue_width > green_width:
+            shift = bb_blue.x1 - bb_green.x1
+        else:
+            shift = 0
+
+        new_x0 = bb_blue.x0 - shift - text_height / 2
+        blue_text.set_x(new_x0)
+        green_text.set_x(new_x0)
+
+        bb_blue = blue_text.get_window_extent(renderer=r)
+        bb_blue = bb_blue.transformed(subplot_axes[1, 0].transData.inverted())
+        bb_green = green_text.get_window_extent(renderer=r)
+        bb_green = bb_green.transformed(subplot_axes[1, 0].transData.inverted())
+
+        title_shift = bb_title.x0 - text_height / 2 - bb_blue.x0
+        title_text.set_x(bb_title.x1 - title_shift / 2)
+        title_text.set_y(bb_title.y1 - text_height / 2)
+
+        count_text = subplot_axes[1, 0].text(bb_blue.x1, bb_blue.y0,
+                                             "n={}".format(len(scatter_df)), ha="right", va="top",
+                                             ma="center",
+                                             size=text_size)
+        bb_count = count_text.get_window_extent(renderer=r)
+        bb_count = bb_count.transformed(subplot_axes[1, 0].transData.inverted())
+
+        count_shift = bb_count.x0 - bb_blue.x0
+        count_text.set_x(bb_count.x1 - count_shift / 2)
+
+        bbox_shift = text_height / 3
+        bbox_xy = (bb_blue.x0 - text_height / 3, bb_count.y0)
+        bbox_width = max_width + 2 * bbox_shift
+        bbox_height = bb_title.y1 - bb_count.y0 - bbox_shift / 2
+
+        subplot_axes[1, 0].add_patch(
+            Rectangle(bbox_xy, bbox_width, bbox_height, fc=(1, 1, 1), ec=(0, 0, 0), lw=0.5, alpha=0.5))
+
+        # 1,1 shifted related
+        subplot_axes[1, 1].title.set_text("shifted related")
+        subplot_axes[1, 1].title.set_size(10)
+        subplot_axes[1, 1].set_xlim(xy_lim)
+        subplot_axes[1, 1].set_ylim(xy_lim)
+        subplot_axes[1, 1].set_xticks(xy_ticks, xy_labels)
+        subplot_axes[1, 1].set_yticks(xy_ticks, xy_labels)
+
+        subplot_axes[1, 1].scatter(scatter_df["pred_green_x"], scatter_df["pred_green_y"], c='g', s=5, alpha=0.4)
+        subplot_axes[1, 1].scatter(scatter_df["pred_blue_x"], scatter_df["pred_blue_y"], c='b', s=5, alpha=0.4)
+
+        subplot_axes[1, 1].axvline(c="black", lw=1)
+        subplot_axes[1, 1].axhline(c="black", lw=1)
+        subplot_axes[1, 1].spines['top'].set_visible(False)
+        subplot_axes[1, 1].spines['right'].set_visible(False)
+        subplot_axes[1, 1].set_xlabel("x position of center (nm)")
+        subplot_axes[1, 1].set_ylabel("y position of center (nm)")
+
+        # box information
+        title_text = subplot_axes[1, 1].text(lim, lim, "mean±SD", ha="right", va="top", ma="center",
+                                             size=text_size)
+        bb_title = title_text.get_window_extent(renderer=r)
+        bb_title = bb_title.transformed(subplot_axes[1, 1].transData.inverted())
+
+        green_text = subplot_axes[1, 1].text(bb_title.x1, bb_title.y0 - text_height / 2,
+                                             "X={:<2.1f}±{:<2.1f} nm\nY={:<2.1f}±{:<2.1f} nm".format(
+                                                 scatter_df['pred_green_x'].mean(),
+                                                 scatter_df['pred_green_x'].std(),
+                                                 scatter_df['pred_green_y'].mean(),
+                                                 scatter_df['pred_green_y'].std()),
+                                             ha="right", va="top", ma="left", size=text_size, c='g')
+        bb_green = green_text.get_window_extent(renderer=r)
+        bb_green = bb_green.transformed(subplot_axes[1, 1].transData.inverted())
+        green_text.set_ha("left")
+        green_width = bb_green.xmax - bb_green.xmin
+
+        blue_text = subplot_axes[1, 1].text(bb_green.x0, bb_green.y0,
+                                            "X={:<2.1f}±{:<2.1f} nm\nY={:<2.1f}±{:<2.1f} nm".format(
+                                                scatter_df['pred_blue_x'].mean(),
+                                                scatter_df['pred_blue_x'].std(),
+                                                scatter_df['pred_blue_y'].mean(),
+                                                scatter_df['pred_blue_y'].std()),
+                                            ha="left", va="top", ma="left", size=text_size, c='b')
+
+        bb_blue = blue_text.get_window_extent(renderer=r)
+        bb_blue = bb_blue.transformed(subplot_axes[1, 1].transData.inverted())
+        blue_width = bb_blue.xmax - bb_blue.xmin
 
     def save_shifted_cm(self):
         ...
