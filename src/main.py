@@ -42,26 +42,25 @@ def open_file_dialog(lineEdit: QLineEdit, mode=1, filetype_list=[], folder=""):
         if fileDialog.exec():
             path_list = fileDialog.selectedFiles()
             path = ';'.join(path_list)
-    elif mode == 2:
+    else:
         # single file
         fileDialog.setFileMode(QFileDialog.ExistingFile)
-        if filetype != "":
-            name_filter = "{} files (*.{} *.{})".format(filetype, filetype, filetype.upper())
-            path = fileDialog.getOpenFileName(filter=name_filter)[0]
-        else:
-            path = fileDialog.getOpenFileName()[0]
-    elif mode == 3:
-        # single file
-        fileDialog.setFileMode(QFileDialog.ExistingFile)
-        if filetype != "":
-            name_filter = "{} files (*.{} *.{})".format(filetype, filetype, filetype.upper())
+        name_filter = ""
+        if len(filetype_list) > 0:
+            for filetype in filetype_list:
+                if len(name_filter) > 0:
+                    name_filter += ";;"
+                name_filter += "{} files (*.{} *.{})".format(filetype, filetype, filetype.upper())
             path = fileDialog.getOpenFileName(filter=name_filter)[0]
         else:
             path = fileDialog.getOpenFileName()[0]
     if mode == 3:
         cur_path = lineEdit.text()
         if len(path) > 0:
-            lineEdit.setText(cur_path + ";" + path)
+            if len(cur_path) > 0:
+                lineEdit.setText(cur_path + ";" + path)
+            else:
+                lineEdit.setText(path)
     else:
         if len(path) > 0:
             lineEdit.setText(path)
