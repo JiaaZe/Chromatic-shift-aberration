@@ -95,8 +95,46 @@ class Correction(QObject):
         return corrected_list
 
     def pipeline(self):
-        self.train_model()
-        self.beads_finished.emit(1)
+        try:
+            # train beads model
+            self.train_model()
+            self.train_beads_finished.emit(1)
 
-        self.shift_centerOfMass()
-        self.aberration_finished.emit(1)
+            # correct taget center of mass csv
+            self.corrected_centerOfMass = self.shift_centerOfMass()
+            self.correction_finished.emit(1)
+
+            # save corrected center of mass into csv
+            self.save_corrected_centerOfMass()
+            self.save_correction_finished.emit(1)
+        except Exception as e:
+            self.logger.error("{}".format(e))
+            self.append_text.emit("{}".format(e))
+
+    def get_beads_vector(self):
+        return self.beads_vector
+
+    def save_corrected_centerOfMass(self):
+        try:
+            for i, target_csv_path in enumerate(self.target_csv_path_list):
+                corrected_com = self.corrected_centerOfMass[i]
+                folder_name, fname = os_path_split(target_csv_path)
+                corrected_path = os_path_join(folder_name, "corrected_" + fname)
+                num_rep = 1
+                prefix, suffix = os_path_splitext(corrected_path)
+                while os_path_exists(corrected_path):
+                    new_prefix = prefix + "_{}".format(num_rep)
+                    corrected_path = new_prefix + suffix
+                    num_rep += 1
+                r, g, b = corrected_com
+                write_csv(corrected_path, header=None,
+                          data=np_array([r[:, 1], r[:, 0], g[:, 1], g[:, 0], b[:, 1], b[:, 0]]).transpose())
+        except Exception as e:
+            msg = "Error when save corrected center of mass csv file: {}.".format(e)
+            raise Exception(msg)
+            # self.logger.error(msg)
+            # self.append_text.emit(msg)
+        else:
+            msg = "Save {} sucessfully.".format(corrected_path)
+            self.logger.info(msg)
+            self.append_text.emit(msg)
