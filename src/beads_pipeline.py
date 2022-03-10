@@ -28,10 +28,17 @@ class Correction(QObject):
         self.logger.info("Beads blue path: {}".format(self.beads_blue_path))
         self.logger.info("Target center of mass csv path: {}".format(path_list[4]))
 
-        self.lr_model = None
+        self.lr_model = lr_model
+        self.img_shape = None
         self.beads_vector = None
+        self.corrected_centerOfMass = None
 
     def train_model(self):
+        if self.lr_model is not None:
+            msg = "Reuse the beads model. Show the beads vector maps."
+            self.logger.info(msg)
+            self.append_text.emit(msg)
+            return
         try:
             if len(self.beads_csv_path) > 0:
                 lr_x_blue, lr_y_blue, lr_x_green, lr_y_green, beads_df, pred_beads = train_beads(self.beads_csv_path)
