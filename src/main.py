@@ -151,6 +151,9 @@ class MainWindow(QMainWindow):
                 self.ui.btn_save_beads_map.setDisabled(True)
             else:
                 self.reuse = True
+                msg = "Reuse the model."
+                self.logger.info(msg)
+                self.update_message(msg)
 
             if self.thread is not None:
                 self.thread.terminate()
