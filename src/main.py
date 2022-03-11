@@ -1,12 +1,14 @@
 import time
 from sys import (exit as sys_exit, argv as sys_argv)
-
-from PyQt5 import QtWidgets
+from configparser import ConfigParser as configparser_ConfigParser
+from os.path import (exists as os_path_exists)
+from os import (listdir as os_listdir)
 
 from ui.MainWindow import Ui_MainWindow
 from beads_pipeline import Correction
 import utils
 
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import (QThread, pyqtSignal as Signal)
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QAbstractItemView, QTreeView, QListView, QLineEdit, \
     QVBoxLayout, QWidget
@@ -18,6 +20,8 @@ from matplotlib.backends.backend_qtagg import (
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
+
+config_file = "config.ini"
 
 
 def open_file_dialog(lineEdit: QLineEdit, mode=1, filetype_list=[], folder=""):
@@ -86,6 +90,13 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        self.cfg = configparser_ConfigParser()
+        if os_path_exists(config_file):
+            self.cfg.read(config_file)
+            self.set_params_from_cfg()
+        else:
+            self.cfg['parameters'] = {}
+
         self.thread = None
         self.correction = None
         self.old_path_list = None
@@ -114,6 +125,11 @@ class MainWindow(QMainWindow):
         self.ui.image_height.textChanged.connect(self.handle_img_shape_changed)
 
         self.beads_vector_maps = None
+
+    def set_params_from_cfg(self):
+        self.ui.red_bgst_identifier.setText(self.cfg.get("parameters", "red_bgst_identifier"))
+        self.ui.green_bgst_identifier.setText(self.cfg.get("parameters", "green_bgst_identifier"))
+        self.ui.blue_bgst_identifier.setText(self.cfg.get("parameters", "blue_bgst_identifier"))
 
     def handle_path_changed(self):
         self.ui.textbrowser_process.clear()
@@ -153,6 +169,14 @@ class MainWindow(QMainWindow):
                 shape_msg += "Please input beads image width."
             if len(shape_msg) > 0:
                 raise Exception(shape_msg)
+            identifier_list = self.check_identifier()
+            self.cfg['parameters']['red_bgst_identifier'] = identifier_list[0]
+            self.cfg['parameters']['green_bgst_identifier'] = identifier_list[1]
+            self.cfg['parameters']['blue_bgst_identifier'] = identifier_list[2]
+            with open(config_file, 'w') as configfile:
+                self.cfg.write(configfile)
+            # path_list = [beads_red_path, beads_green_path, beads_blue_path, beads_csv_path, target_cm_path]
+            path_list = [beads_folders_path, beads_csv_path, target_cm_path]
 
             # reuse the old beads lr model
             if self.reuse:
