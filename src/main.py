@@ -41,7 +41,7 @@ def open_file_dialog(lineEdit: QLineEdit, mode=1, filetype_list=[], folder=""):
         fileDialog.setFileMode(QFileDialog.Directory)
         # path = fileDialog.getExistingDirectory()
         fileDialog.setOption(QFileDialog.DontUseNativeDialog, True)
-        fileDialog.setOption(QFileDialog.ShowDirsOnly, True)
+        # fileDialog.setOption(QFileDialog.ShowDirsOnly, True)
         file_view = fileDialog.findChild(QListView)
 
         # to make it possible to select multiple directories:
