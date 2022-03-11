@@ -3,8 +3,9 @@ import logging
 from PyQt5.QtCore import (pyqtSignal as Signal, QObject)
 from os.path import (split as os_path_split, join as os_path_join, exists as os_path_exists,
                      splitext as os_path_splitext)
-from beads_processing import train_beads, process_bead
-from pandas import (read_csv as pd_read_csv)
+from os import (listdir as os_listdir)
+from beads_processing import train_beads, get_beads_df
+from pandas import (read_csv as pd_read_csv, concat as pd_concat)
 from numpy import (array as np_array, round as np_round)
 from utils import write_csv
 
@@ -15,18 +16,16 @@ class Correction(QObject):
     correction_finished = Signal(int)
     save_correction_finished = Signal(int)
 
-    def __init__(self, logger: logging.Logger, path_list: list, lr_model: list):
+    def __init__(self, logger: logging.Logger, path_list: list, lr_model: list, bgst_identifier: list):
         super().__init__()
         self.logger = logger
-        self.beads_red_path = path_list[0]
-        self.beads_green_path = path_list[1]
-        self.beads_blue_path = path_list[2]
-        self.beads_csv_path = path_list[3]
-        self.target_csv_path_list = path_list[4].split(";")
-        self.logger.info("Beads red path: {}".format(self.beads_red_path))
-        self.logger.info("Beads green path: {}".format(self.beads_green_path))
-        self.logger.info("Beads blue path: {}".format(self.beads_blue_path))
-        self.logger.info("Target center of mass csv path: {}".format(path_list[4]))
+        self.beads_folder_list = path_list[0].split(";")
+        self.beads_csv_path = path_list[1]
+        self.target_csv_path_list = path_list[2].split(";")
+        self.idenifier = bgst_identifier
+        self.logger.info("Beads image folder path: {}".format(path_list[0]))
+        self.logger.info("Beads csv path: {}".format(path_list[1]))
+        self.logger.info("Target center of mass csv path: {}".format(path_list[2]))
 
         self.lr_model = lr_model
         self.img_shape = None
