@@ -1,10 +1,10 @@
 import logging
 
-from PyQt5.QtCore import (pyqtSignal as Signal, QObject, QThread)
+from PyQt5.QtCore import (pyqtSignal as Signal, QObject)
 from os.path import (split as os_path_split, join as os_path_join, exists as os_path_exists,
                      splitext as os_path_splitext)
-from src.beads_processing import train_beads, process_bead
-from pandas import (DataFrame as pd_DataFrame, read_csv as pd_read_csv)
+from beads_processing import train_beads, process_bead
+from pandas import (read_csv as pd_read_csv)
 from numpy import (array as np_array, round as np_round)
 from utils import write_csv
 
