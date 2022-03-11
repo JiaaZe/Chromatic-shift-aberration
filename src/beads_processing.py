@@ -26,7 +26,7 @@ def train_beads(beads_path):
     :return:
     """
     try:
-        df_beads = pd_read_csv(beads_path, names=['red_y', 'red_x', 'green_y', 'green_x', 'blue_y', 'blue_x'])
+        df_beads = pd_read_csv(beads_path, names=['red_x', 'red_y', 'green_x', 'green_y', 'blue_x', 'blue_y'])
     except Exception as e:
         raise e
     # green channel
