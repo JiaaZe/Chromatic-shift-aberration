@@ -247,6 +247,30 @@ class MainWindow(QMainWindow):
     def clear_target_csv_path(self):
         self.ui.target_csv_path.clear()
 
+    def check_identifier(self):
+        # Check identifier for each image folder
+        err_msg = ""
+        bgst_identifier = [self.ui.red_bgst_identifier.text().upper(), self.ui.green_bgst_identifier.text().upper(),
+                           self.ui.blue_bgst_identifier.text().upper()]
+        folder_list = self.ui.beads_folder_path.toPlainText().split(";")
+        for folder in folder_list:
+            bgst_identifier_flag = [0, 0, 0]
+            file_list = os_listdir(folder)
+            for file_name in file_list:
+                file_name = file_name.upper()
+                if not file_name.endswith(".TIF"):
+                    continue
+                for i in range(3):
+                    if bgst_identifier[i] in file_name \
+                            and bgst_identifier[(i - 2) % 3] not in file_name \
+                            and bgst_identifier[(i - 1) % 3] not in file_name:
+                        bgst_identifier_flag[i] = bgst_identifier_flag[i] + 1
+            if sum(bgst_identifier_flag) != 3:
+                err_msg += "BGST identifier can not identify channel images in the folder: {}\n".format(folder)
+        if len(err_msg) > 0:
+            raise Exception(err_msg)
+        return bgst_identifier
+
     def show_vector_map(self):
         # get lr model list
         self.old_lr_model = self.correction.lr_model
