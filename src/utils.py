@@ -34,4 +34,4 @@ def write_csv(path, data, header):
     if header is not None and len(header) > 0 and len(header) != data.shape[1]:
         raise Exception("Header length incompatible with data length.")
     df = pd_DataFrame(columns=header, data=data)
-    df.to_csv(path, index=False, header=False)
+    df.to_csv(path, index=False, header=False, encoding="utf-8")
