@@ -40,14 +40,32 @@ class Correction(QObject):
             return
         try:
             if len(self.beads_csv_path) > 0:
-                lr_x_blue, lr_y_blue, lr_x_green, lr_y_green, beads_df, pred_beads = train_beads(self.beads_csv_path)
+                lr_x_blue, lr_y_blue, lr_x_green, lr_y_green, beads_df, pred_beads = train_beads(self.beads_csv_path,
+                                                                                                 df_beads=None)
                 self.lr_model = [lr_x_blue, lr_y_blue, lr_x_green, lr_y_green]
                 self.beads_vector = [beads_df, pred_beads]
             else:
-                beads_tif_path_list = [self.beads_red_path, self.beads_green_path, self.beads_blue_path]
-                lr_x_blue, lr_y_blue, lr_x_green, lr_y_green, beads_df, pred_beads, img_shape = process_bead(
-                    beads_tif_path_list, False)
-                self.img_shape = img_shape
+                beads_df = None
+                for folder in self.beads_folder_list:
+                    file_list = os_listdir(folder)
+                    beads_red_path = ""
+                    beads_green_path = ""
+                    beads_blue_path = ""
+                    for i, filename in enumerate(file_list):
+                        filename = filename.upper()
+                        if not filename.endswith(".TIF"):
+                            continue
+                        if self.idenifier[0] in filename:
+                            beads_red_path = os_path_join(folder, file_list[i])
+                        elif self.idenifier[1] in filename:
+                            beads_green_path = os_path_join(folder, file_list[i])
+                        elif self.idenifier[2] in filename:
+                            beads_blue_path = os_path_join(folder, file_list[i])
+                    beads_tif_path_list = [beads_red_path, beads_green_path, beads_blue_path]
+                    one_beads_df = get_beads_df(beads_tif_path_list, bgst=False)
+                    beads_df = pd_concat([beads_df, one_beads_df], ignore_index=True)
+                lr_x_blue, lr_y_blue, lr_x_green, lr_y_green, _, pred_beads = train_beads(beads_path="",
+                                                                                          df_beads=beads_df)
                 self.lr_model = [lr_x_blue, lr_y_blue, lr_x_green, lr_y_green]
                 self.beads_vector = [beads_df, pred_beads]
         except Exception as e:
