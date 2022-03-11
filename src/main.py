@@ -106,9 +106,7 @@ class MainWindow(QMainWindow):
         self.img_shape_changed = False
 
         self.ui.btn_start.clicked.connect(self.start_pipeline)
-        self.ui.btn_red_browse.clicked.connect(self.open_red_file)
-        self.ui.btn_green_browse.clicked.connect(self.open_green_file)
-        self.ui.btn_blue_browse.clicked.connect(self.open_blue_file)
+        self.ui.btn_beads_folders_browse.clicked.connect(self.open_beads_folder)
         self.ui.btn_beadscsv_browse.clicked.connect(self.open_beads_csv_file)
         self.ui.btn_target_csv_browser.clicked.connect(self.open_target_file)
 
@@ -116,11 +114,8 @@ class MainWindow(QMainWindow):
         self.ui.btn_save_beads_map.clicked.connect(self.save_beads_map)
 
         # text change
-        self.ui.beads_red_path.textChanged.connect(self.handle_path_changed)
-        self.ui.beads_green_path.textChanged.connect(self.handle_path_changed)
-        self.ui.beads_blue_path.textChanged.connect(self.handle_path_changed)
+        self.ui.beads_folder_path.textChanged.connect(self.handle_path_changed)
         self.ui.beads_csv_path.textChanged.connect(self.handle_path_changed)
-        # self.ui.target_csv_path.textChanged.connect(self.handle_path_changed)
         self.ui.image_width.textChanged.connect(self.handle_img_shape_changed)
         self.ui.image_height.textChanged.connect(self.handle_img_shape_changed)
 
@@ -139,29 +134,34 @@ class MainWindow(QMainWindow):
         self.img_shape_changed = True
 
     def start_pipeline(self):
+        self.ui.btn_start.setDisabled(True)
         try:
             msg = "[{}]===========Start pipeline============".format(
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
             self.logger.info(msg)
             self.update_message(msg)
 
-            beads_red_path = self.ui.beads_red_path.text()
-            beads_green_path = self.ui.beads_green_path.text()
-            beads_blue_path = self.ui.beads_blue_path.text()
+            # beads_red_path = self.ui.beads_red_path.text()
+            # beads_green_path = self.ui.beads_green_path.text()
+            # beads_blue_path = self.ui.beads_blue_path.text()
+            beads_folders_path = self.ui.beads_folder_path.toPlainText()
             beads_csv_path = self.ui.beads_csv_path.text()
             target_cm_path = self.ui.target_csv_path.text()
             if len(beads_csv_path) > 0:
                 msg = "Using beads csv file to train the model."
                 self.logger.info(msg)
                 self.update_message(msg)
-            elif len(beads_red_path) > 0 and len(beads_green_path) > 0 and len(beads_blue_path) > 0:
+            elif len(beads_folders_path) > 0:
                 msg = "Using beads images to train the model."
                 self.logger.info(msg)
                 self.update_message(msg)
             else:
-                msg = "Invalid path."
+                msg = "Invalid beads path."
                 raise Exception(msg)
-            path_list = [beads_red_path, beads_green_path, beads_blue_path, beads_csv_path, target_cm_path]
+            if len(target_cm_path) == 0:
+                msg = "Please select target center of mass csv path."
+                raise Exception(msg)
+
             shape_msg = ""
             if len(self.ui.image_width.text()) < 0:
                 shape_msg += "Please input beads image width."
@@ -192,19 +192,6 @@ class MainWindow(QMainWindow):
                 self.ui.scroll_beads_content = QtWidgets.QWidget()
                 self.ui.scroll_beads.setWidget(self.ui.scroll_beads_content)
                 self.ui.btn_save_beads_map.setDisabled(True)
-            # if self.old_path_list != path_list:
-            #     self.reuse = False
-            #     self.old_lr_model = None
-            #     self.old_beads_vector = None
-            #
-            #     self.ui.scroll_beads_content = QtWidgets.QWidget()
-            #     self.ui.scroll_beads.setWidget(self.ui.scroll_beads_content)
-            #     self.ui.btn_save_beads_map.setDisabled(True)
-            # else:
-            #     self.reuse = True
-            #     msg = "Reuse the model."
-            #     self.logger.info(msg)
-            #     self.update_message(msg)
 
             if self.thread is not None:
                 self.thread.terminate()
@@ -223,20 +210,15 @@ class MainWindow(QMainWindow):
 
             self.old_path_list = path_list
         except Exception as e:
+            self.ui.btn_start.setEnabled(True)
             self.logger.error("{}".format(e))
             self.update_message("{}".format(e))
 
     def update_message(self, text):
         self.ui.textbrowser_process.append(text)
 
-    def open_red_file(self):
-        open_file_dialog(self.ui.beads_red_path, mode=2, filetype_list=["tif"])
-
-    def open_green_file(self):
-        open_file_dialog(self.ui.beads_green_path, mode=2, filetype_list=["tif"])
-
-    def open_blue_file(self):
-        open_file_dialog(self.ui.beads_blue_path, mode=2, filetype_list=["tif"])
+    def open_beads_folder(self):
+        open_file_dialog(self.ui.beads_folder_path, mode=1)
 
     def open_beads_csv_file(self):
         open_file_dialog(self.ui.beads_csv_path, mode=2, filetype_list=["csv", "xlsx", "xls"])
