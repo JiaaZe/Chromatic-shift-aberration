@@ -197,7 +197,7 @@ class MainWindow(QMainWindow):
                 self.thread.terminate()
             self.thread = QThread(self)
             self.logger.info('start doing stuff in: {}'.format(QThread.currentThread()))
-            self.correction = Correction(self.logger, path_list, self.old_lr_model)
+            self.correction = Correction(self.logger, path_list, self.old_lr_model, identifier_list)
             self.correction.moveToThread(self.thread)
             self.start_backgroung_work.connect(self.correction.pipeline)
 
@@ -530,6 +530,7 @@ class MainWindow(QMainWindow):
 
         self.ui.scroll_beads_content.show()
         self.ui.btn_save_beads_map.setEnabled(True)
+        self.ui.btn_start.setEnabled(True)
 
     def save_beads_map(self):
         try:
