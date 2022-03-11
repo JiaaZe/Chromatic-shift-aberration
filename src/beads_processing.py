@@ -19,16 +19,18 @@ from matplotlib.pyplot import (Rectangle as plt_Rectangle, Circle as plt_Circle)
 from sklearn.linear_model import LinearRegression
 
 
-def train_beads(beads_path):
+def train_beads(beads_path, df_beads):
     """
-    Read beads information from csv file
+    Read beads information from csv file or beads dataFrame
+    :param df_beads: beads dataframe
     :param beads_path:
     :return:
     """
-    try:
-        df_beads = pd_read_csv(beads_path, names=['red_x', 'red_y', 'green_x', 'green_y', 'blue_x', 'blue_y'])
-    except Exception as e:
-        raise e
+    if len(beads_path) > 0:
+        try:
+            df_beads = pd_read_csv(beads_path, names=['red_x', 'red_y', 'green_x', 'green_y', 'blue_x', 'blue_y'])
+        except Exception as e:
+            raise e
     # green channel
     X_green = np_array(df_beads.loc[:, ['green_x', 'green_y']])
     Y_x_green = np_array(df_beads['red_x'] - df_beads['green_x'])
@@ -244,14 +246,13 @@ def adjust_filter_bead_c1(bead):
     return f
 
 
-def process_bead(beads_path_list, bgst=True):
+def get_beads_df(beads_path_list, bgst=True):
     if len(beads_path_list) != 3:
         raise Exception("Lack beads images. Found {} images, but required 3 images.".format(len(beads_path_list)))
     bead_path_r, bead_path_g, bead_path_b = beads_path_list
     bead_r = cv2_imread(bead_path_r, -1)
     bead_g = cv2_imread(bead_path_g, -1)
     bead_b = cv2_imread(bead_path_b, -1)
-    image_shape = bead_r.shape
     if not bgst:
         bead_r_bgst = sub_mean(bead_r)
         bead_g_bgst = sub_mean(bead_g)
@@ -317,45 +318,14 @@ def process_bead(beads_path_list, bgst=True):
     center_mass = np_array(center_mass)
     if center_mass.shape[0] == 0:
         raise Exception("Beads not found.")
+
     X_red = np_array(center_mass[:, 0, :])
     X_green = np_array(center_mass[:, 1, :])
-    Y_x_green = np_array(center_mass[:, 0, 0] - center_mass[:, 1, 0])
-    Y_y_green = np_array(center_mass[:, 0, 1] - center_mass[:, 1, 1])
-
-    lr_x_green = LinearRegression()
-    lr_x_green.fit(X_green, Y_x_green)
-
-    lr_y_green = LinearRegression()
-    lr_y_green.fit(X_green, Y_y_green)
-
-    # blue channel
     X_blue = np_array(center_mass[:, 2, :])
-    Y_x_blue = np_array(center_mass[:, 0, 0] - center_mass[:, 2, 0])
-    Y_y_blue = np_array(center_mass[:, 0, 1] - center_mass[:, 2, 1])
-
-    lr_x_blue = LinearRegression()
-    lr_x_blue.fit(X_blue, Y_x_blue)
-
-    lr_y_blue = LinearRegression()
-    lr_y_blue.fit(X_blue, Y_y_blue)
-
-    pred_x_green = lr_x_green.predict(X_green)
-    pred_y_green = lr_y_green.predict(X_green)
-
-    pred_x_blue = lr_x_blue.predict(X_blue)
-    pred_y_blue = lr_y_blue.predict(X_blue)
-
     beads_df = pd_DataFrame({'red_y': X_red[:, 1],
                              'red_x': X_red[:, 0],
                              'green_y': X_green[:, 1],
                              'green_x': X_green[:, 0],
                              'blue_y': X_blue[:, 1],
                              'blue_x': X_blue[:, 0]})
-
-    pred_beads = pd_DataFrame({'red_y': X_red[:, 1],
-                               'red_x': X_red[:, 0],
-                               'green_y': X_green[:, 1] + pred_y_green,
-                               'green_x': X_green[:, 0] + pred_x_green,
-                               'blue_y': X_blue[:, 1] + pred_y_blue,
-                               'blue_x': X_blue[:, 0] + pred_x_blue})
-    return lr_x_blue, lr_y_blue, lr_x_green, lr_y_green, beads_df, pred_beads, image_shape
+    return beads_df
