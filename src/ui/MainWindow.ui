@@ -39,8 +39,15 @@
        <string>Beads Images</string>
       </property>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="2" column="1">
-        <widget class="QLineEdit" name="beads_blue_path">
+       <item row="0" column="2">
+        <widget class="QPushButton" name="btn_red_browse">
+         <property name="text">
+          <string>Browse</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="beads_green_path">
          <property name="inputMask">
           <string/>
          </property>
@@ -51,14 +58,7 @@
           <bool>false</bool>
          </property>
          <property name="placeholderText">
-          <string>Select blue channel beads image path</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>Green channel</string>
+          <string>Select green channel beads image path</string>
          </property>
         </widget>
        </item>
@@ -69,17 +69,10 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="2">
-        <widget class="QPushButton" name="btn_red_browse">
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_4">
          <property name="text">
-          <string>Browse</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="2">
-        <widget class="QPushButton" name="btn_green_browse">
-         <property name="text">
-          <string>Browse</string>
+          <string>Green channel</string>
          </property>
         </widget>
        </item>
@@ -106,8 +99,8 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="QLineEdit" name="beads_green_path">
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="beads_blue_path">
          <property name="inputMask">
           <string/>
          </property>
@@ -118,7 +111,7 @@
           <bool>false</bool>
          </property>
          <property name="placeholderText">
-          <string>Select green channel beads image path</string>
+          <string>Select blue channel beads image path</string>
          </property>
         </widget>
        </item>
@@ -126,6 +119,111 @@
         <widget class="QLabel" name="label_5">
          <property name="text">
           <string>Blue channel</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3" rowspan="3">
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="minimumSize">
+          <size>
+           <width>141</width>
+           <height>100</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>141</width>
+           <height>100</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Image Size</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_12">
+          <property name="leftMargin">
+           <number>10</number>
+          </property>
+          <property name="topMargin">
+           <number>10</number>
+          </property>
+          <property name="rightMargin">
+           <number>20</number>
+          </property>
+          <property name="bottomMargin">
+           <number>10</number>
+          </property>
+          <item row="0" column="0">
+           <layout class="QFormLayout" name="formLayout_3">
+            <property name="labelAlignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+            <property name="formAlignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+            <property name="verticalSpacing">
+             <number>10</number>
+            </property>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_13">
+              <property name="text">
+               <string>Height</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="image_height">
+              <property name="minimumSize">
+               <size>
+                <width>60</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>60</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>1080</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_19">
+              <property name="text">
+               <string>Width</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="image_width">
+              <property name="minimumSize">
+               <size>
+                <width>60</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>60</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>1280</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QPushButton" name="btn_green_browse">
+         <property name="text">
+          <string>Browse</string>
          </property>
         </widget>
        </item>
