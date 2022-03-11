@@ -91,7 +91,8 @@ class MainWindow(QMainWindow):
         self.old_path_list = None
         self.old_lr_model = None
         self.old_beads_vector = None
-        self.reuse = False
+        self.reuse = True
+        self.img_shape_changed = False
 
         self.ui.btn_start.clicked.connect(self.start_pipeline)
         self.ui.btn_red_browse.clicked.connect(self.open_red_file)
@@ -108,12 +109,18 @@ class MainWindow(QMainWindow):
         self.ui.beads_green_path.textChanged.connect(self.handle_path_changed)
         self.ui.beads_blue_path.textChanged.connect(self.handle_path_changed)
         self.ui.beads_csv_path.textChanged.connect(self.handle_path_changed)
-        self.ui.target_csv_path.textChanged.connect(self.handle_path_changed)
+        # self.ui.target_csv_path.textChanged.connect(self.handle_path_changed)
+        self.ui.image_width.textChanged.connect(self.handle_img_shape_changed)
+        self.ui.image_height.textChanged.connect(self.handle_img_shape_changed)
 
         self.beads_vector_maps = None
 
     def handle_path_changed(self):
         self.ui.textbrowser_process.clear()
+        self.reuse = False
+
+    def handle_img_shape_changed(self):
+        self.img_shape_changed = True
 
     def start_pipeline(self):
         try:
@@ -139,21 +146,41 @@ class MainWindow(QMainWindow):
                 msg = "Invalid path."
                 raise Exception(msg)
             path_list = [beads_red_path, beads_green_path, beads_blue_path, beads_csv_path, target_cm_path]
+            shape_msg = ""
+            if len(self.ui.image_width.text()) < 0:
+                shape_msg += "Please input beads image width."
+            if len(self.ui.image_height.text()) < 0:
+                shape_msg += "Please input beads image width."
+            if len(shape_msg) > 0:
+                raise Exception(shape_msg)
 
             # reuse the old beads lr model
-            if self.old_path_list != path_list:
-                self.reuse = False
+            if self.reuse:
+                ...
+            else:
                 self.old_lr_model = None
                 self.old_beads_vector = None
 
                 self.ui.scroll_beads_content = QtWidgets.QWidget()
                 self.ui.scroll_beads.setWidget(self.ui.scroll_beads_content)
                 self.ui.btn_save_beads_map.setDisabled(True)
-            else:
-                self.reuse = True
-                msg = "Reuse the model."
-                self.logger.info(msg)
-                self.update_message(msg)
+            if self.img_shape_changed:
+                self.ui.scroll_beads_content = QtWidgets.QWidget()
+                self.ui.scroll_beads.setWidget(self.ui.scroll_beads_content)
+                self.ui.btn_save_beads_map.setDisabled(True)
+            # if self.old_path_list != path_list:
+            #     self.reuse = False
+            #     self.old_lr_model = None
+            #     self.old_beads_vector = None
+            #
+            #     self.ui.scroll_beads_content = QtWidgets.QWidget()
+            #     self.ui.scroll_beads.setWidget(self.ui.scroll_beads_content)
+            #     self.ui.btn_save_beads_map.setDisabled(True)
+            # else:
+            #     self.reuse = True
+            #     msg = "Reuse the model."
+            #     self.logger.info(msg)
+            #     self.update_message(msg)
 
             if self.thread is not None:
                 self.thread.terminate()
@@ -199,13 +226,17 @@ class MainWindow(QMainWindow):
     def show_vector_map(self):
         # get lr model list
         self.old_lr_model = self.correction.lr_model
-
         if self.reuse:
-            return
+            if not self.img_shape_changed:
+                return
+            else:
+                beads_df, pred_beads = self.old_beads_vector
         else:
+            self.reuse = True
+            self.img_shape_changed = False
             beads_df, pred_beads = self.correction.get_beads_vector()
-
-        img_shape = self.correction.img_shape
+            self.old_beads_vector = [beads_df, pred_beads]
+        img_shape = [int(self.ui.image_width.text()), int(self.ui.image_height.text())]
         arrow_df = pd_DataFrame({'diff_green_y': 100 * (beads_df['green_y'] - beads_df['red_y']),
                                  'diff_green_x': 100 * (beads_df['green_x'] - beads_df['red_x']),
                                  'diff_blue_y': 100 * (beads_df['blue_y'] - beads_df['red_y']),
