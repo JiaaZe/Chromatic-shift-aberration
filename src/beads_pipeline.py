@@ -12,6 +12,7 @@ from utils import write_csv
 
 class Correction(QObject):
     append_text = Signal(str)
+    update_progress = Signal(str)
     train_beads_finished = Signal(int)
     correction_finished = Signal(int)
     save_correction_finished = Signal(int)
@@ -46,7 +47,8 @@ class Correction(QObject):
                 self.beads_vector = [beads_df, pred_beads]
             else:
                 beads_df = None
-                for folder in self.beads_folder_list:
+                num_beads_folders = len(self.beads_folder_list)
+                for j, folder in enumerate(self.beads_folder_list):
                     file_list = os_listdir(folder)
                     beads_red_path = ""
                     beads_green_path = ""
@@ -64,6 +66,15 @@ class Correction(QObject):
                     beads_tif_path_list = [beads_red_path, beads_green_path, beads_blue_path]
                     one_beads_df = get_beads_df(beads_tif_path_list, bgst=False)
                     beads_df = pd_concat([beads_df, one_beads_df], ignore_index=True)
+                    finished = "==" * (j + 1)
+                    left = ".." * (num_beads_folders - j - 1)
+                    progress_text = "Process beads images: {}/{} [{}>{}] ".format(j + 1, num_beads_folders, finished, left)
+                    if j == 0:
+                        self.append_text.emit(progress_text)
+                    else:
+                        self.update_progress.emit(progress_text)
+
+                self.append_text.emit("Start train chromatic shift model.")
                 lr_x_blue, lr_y_blue, lr_x_green, lr_y_green, _, pred_beads = train_beads(beads_path="",
                                                                                           df_beads=beads_df)
                 self.lr_model = [lr_x_blue, lr_y_blue, lr_x_green, lr_y_green]

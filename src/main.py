@@ -208,6 +208,7 @@ class MainWindow(QMainWindow):
             self.start_backgroung_work.connect(self.correction.pipeline)
 
             self.correction.append_text.connect(self.update_message)
+            self.correction.update_progress.connect(self.update_process)
             self.correction.train_beads_finished.connect(self.show_vector_map)
             # self.correction.correction_finished.connect(self.save_shifted_centerOfMass)
 
@@ -222,6 +223,12 @@ class MainWindow(QMainWindow):
 
     def update_message(self, text):
         self.ui.textbrowser_process.append(text)
+
+    def update_process(self, text):
+        cur_text = self.ui.textbrowser_process.toPlainText()
+        cur_text_list = cur_text.split("\n")
+        cur_text_list[-1] = text
+        self.ui.textbrowser_process.setText("\n".join(cur_text_list))
 
     def open_beads_folder(self):
         open_file_dialog(self.ui.beads_folder_path, mode=1)
@@ -557,7 +564,7 @@ class MainWindow(QMainWindow):
                 with PdfPages(save_path) as pdf:
                     pdf.savefig(self.beads_vector_maps.figure, dpi=120)
             else:
-                self.beads_maps.figure.savefig(save_path)
+                self.beads_vector_maps.figure.savefig(save_path)
         except Exception as e:
             msg = "Error when save the beads vector maps: {}".format(e)
             self.logger.error(msg)
