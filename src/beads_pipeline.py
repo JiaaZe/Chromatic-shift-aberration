@@ -14,6 +14,7 @@ class Correction(QObject):
     append_text = Signal(str)
     update_progress = Signal(str)
     train_beads_finished = Signal(int)
+    pipeline_error = Signal(int)
     correction_finished = Signal(int)
     save_correction_finished = Signal(int)
 
@@ -145,6 +146,7 @@ class Correction(QObject):
         except Exception as e:
             self.logger.error("{}".format(e))
             self.append_text.emit("{}".format(e))
+            self.pipeline_error.emit(1)
 
     def get_beads_vector(self):
         return self.beads_vector
