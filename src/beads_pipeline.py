@@ -64,7 +64,12 @@ class Correction(QObject):
                         elif self.idenifier[2] in filename:
                             beads_blue_path = os_path_join(folder, file_list[i])
                     beads_tif_path_list = [beads_red_path, beads_green_path, beads_blue_path]
-                    one_beads_df = get_beads_df(beads_tif_path_list, bgst=True)
+                    one_beads_df, flag = get_beads_df(beads_tif_path_list, bgst=True)
+                    if not flag:
+                        self.logger.info("When process input image, no beads found. Try background subtraction.")
+                        one_beads_df, flag = get_beads_df(beads_tif_path_list, bgst=False)
+                        if not flag:
+                            raise Exception("After background subtraction, no beads found.")
                     beads_df = pd_concat([beads_df, one_beads_df], ignore_index=True)
                     finished = "==" * (j + 1)
                     left = ".." * (num_beads_folders - j - 1)
