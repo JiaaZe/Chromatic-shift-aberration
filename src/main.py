@@ -165,14 +165,15 @@ class MainWindow(QMainWindow):
                 msg = "Invalid beads path."
                 raise Exception(msg)
             if len(target_cm_path) == 0:
-                msg = "Please select target center of mass csv path."
-                raise Exception(msg)
+                msg = "No target center of mass csv path selected. Only training the model."
+                self.logger.info(msg)
+                self.update_message(msg)
 
             shape_msg = ""
             if len(self.ui.image_width.text()) < 0:
                 shape_msg += "Please input beads image width."
             if len(self.ui.image_height.text()) < 0:
-                shape_msg += "Please input beads image width."
+                shape_msg += "Please input beads image height."
             if len(shape_msg) > 0:
                 raise Exception(shape_msg)
             identifier_list = self.check_identifier()
@@ -210,7 +211,6 @@ class MainWindow(QMainWindow):
             self.correction.append_text.connect(self.update_message)
             self.correction.update_progress.connect(self.update_process)
             self.correction.train_beads_finished.connect(self.show_vector_map)
-            # self.correction.correction_finished.connect(self.save_shifted_centerOfMass)
 
             self.thread.start()
             self.start_backgroung_work.emit()
@@ -277,6 +277,7 @@ class MainWindow(QMainWindow):
             self.old_lr_model = self.correction.lr_model
             if self.reuse:
                 if not self.img_shape_changed:
+                    self.ui.btn_start.setEnabled(True)
                     return
                 else:
                     beads_df, pred_beads = self.old_beads_vector
