@@ -253,54 +253,56 @@ def get_beads_df(beads_path_list, bgst=True):
     bead_r = cv2_imread(bead_path_r, -1)
     bead_g = cv2_imread(bead_path_g, -1)
     bead_b = cv2_imread(bead_path_b, -1)
-    if not bgst:
-        bead_r_bgst = sub_mean(bead_r)
-        bead_g_bgst = sub_mean(bead_g)
-        bead_b_bgst = sub_mean(bead_b)
-    else:
-        bead_r_bgst = bead_r
-        bead_g_bgst = bead_g
-        bead_b_bgst = bead_b
 
-    bead_r_uint8, bead_r_c3, bead_r_opening = get_opening(bead_r_bgst)
-    bead_g_uint8, bead_g_c3, bead_g_opening = get_opening(bead_g_bgst)
-    bead_b_uint8, bead_b_c3, bead_b_opening = get_opening(bead_b_bgst)
+    center_mass = []
+    for _ in range(2):
+        if not bgst:
+            bead_r_bgst = sub_mean(bead_r)
+            bead_g_bgst = sub_mean(bead_g)
+            bead_b_bgst = sub_mean(bead_b)
+        else:
+            bead_r_bgst = bead_r
+            bead_g_bgst = bead_g
+            bead_b_bgst = bead_b
+
+        bead_r_uint8, bead_r_c3, bead_r_opening = get_opening(bead_r_bgst)
+        bead_g_uint8, bead_g_c3, bead_g_opening = get_opening(bead_g_bgst)
+        bead_b_uint8, bead_b_c3, bead_b_opening = get_opening(bead_b_bgst)
 
         bgst_composited_uint8_c3 = np_dstack((bead_r_uint8, bead_g_uint8, bead_b_uint8))
         bgst_composited_uint16_c3 = np_dstack((bead_r_bgst, bead_g_bgst, bead_b_bgst))
 
-    h, w = bead_r_opening.shape
-    composited_c1 = np_zeros_like(bead_r_opening)
-    for i in range(h):
-        for j in range(w):
-            r, g, b = bgst_composited_uint8_c3[i, j, 0:3]
-            if r > 0 and b > 0 and g > 0:
-                composited_c1[i, j] = 1
-    _, markers = cv2_connectedComponents(composited_c1)
-    markers = markers + 10
-    markers = cv2_watershed(bgst_composited_uint8_c3, markers)
-    props = measure_regionprops_table(markers, intensity_image=composited_c1,
-                                      properties=['label', 'coords', 'centroid',
-                                                  'area', 'mean_intensity'])
+        h, w = bead_r_opening.shape
+        composited_c1 = np_zeros_like(bead_r_opening)
+        for i in range(h):
+            for j in range(w):
+                r, g, b = bgst_composited_uint8_c3[i, j, 0:3]
+                if r > 0 and b > 0 and g > 0:
+                    composited_c1[i, j] = 1
+        _, markers = cv2_connectedComponents(composited_c1)
+        markers = markers + 10
+        markers = cv2_watershed(bgst_composited_uint8_c3, markers)
+        props = measure_regionprops_table(markers, intensity_image=composited_c1,
+                                          properties=['label', 'coords', 'centroid',
+                                                      'area', 'mean_intensity'])
 
-    df_props = pd_DataFrame(props)
-    df_props = df_props[df_props.area <= 60]
-    df_props = df_props[df_props.area >= 20]
-    df_props.sort_values(by=['area'], ascending=False, inplace=True)
+        df_props = pd_DataFrame(props)
+        df_props = df_props[df_props.area <= 60]
+        df_props = df_props[df_props.area >= 20]
+        df_props.sort_values(by=['area'], ascending=False, inplace=True)
 
-    center_mass = []
-    beads_coords = np_array(df_props['coords'])
-    composited_c3_contours = find_bead_contours(bgst_composited_uint8_c3, beads_coords)
+        beads_coords = np_array(df_props['coords'])
+        composited_c3_contours = find_bead_contours(bgst_composited_uint8_c3, beads_coords)
 
-    for i, contour in enumerate(composited_c3_contours):
-        contour_np = np_array(contour)
-        if len(contour_np) == 0:
-            continue
-        x, y, w, h = cv2_boundingRect(contour_np)
-        if x == 0 or y == 0:
-            continue
-        if abs(w - h) > 2:
-            continue
+        for i, contour in enumerate(composited_c3_contours):
+            contour_np = np_array(contour)
+            if len(contour_np) == 0:
+                continue
+            x, y, w, h = cv2_boundingRect(contour_np)
+            if x == 0 or y == 0:
+                continue
+            if abs(w - h) > 2:
+                continue
 
             select_bead = bgst_composited_uint8_c3[x - 1:x + w + 1, y - 1:y + h + 1]
             select_bead_uint16 = bgst_composited_uint16_c3[x - 1:x + w + 1, y - 1:y + h + 1]
@@ -308,16 +310,27 @@ def get_beads_df(beads_path_list, bgst=True):
             select_bead, _ = clean_contours(select_bead, new_contours)
             select_bead_uint16, _ = clean_contours(select_bead_uint16, new_contours)
 
-        r_bead = select_bead[:, :, 0]
-        g_bead = select_bead[:, :, 1]
-        b_bead = select_bead[:, :, 2]
-        f_r, f_g, f_b = adjust_filter_bead_c1(r_bead), adjust_filter_bead_c1(g_bead), adjust_filter_bead_c1(b_bead)
-        if f_r * f_b * f_g > 0 and 0.7 < (f_r + f_b + f_g) / 3 < 1:
-            center_r = np_round(ndi_center_of_mass(r_bead), 3) + [x - 1, y - 1] + [0.5, 0.5]
-            center_g = np_round(ndi_center_of_mass(g_bead), 3) + [x - 1, y - 1] + [0.5, 0.5]
-            center_b = np_round(ndi_center_of_mass(b_bead), 3) + [x - 1, y - 1] + [0.5, 0.5]
-            center_mass.append([center_r, center_g, center_b])
-    center_mass = np_array(center_mass)
+            r_bead = select_bead[:, :, 0]
+            g_bead = select_bead[:, :, 1]
+            b_bead = select_bead[:, :, 2]
+
+            r_bead_uint16 = select_bead_uint16[:, :, 0]
+            g_bead_uint16 = select_bead_uint16[:, :, 1]
+            b_bead_uint16 = select_bead_uint16[:, :, 2]
+
+            f_r, f_g, f_b = adjust_filter_bead_c1(r_bead), adjust_filter_bead_c1(g_bead), adjust_filter_bead_c1(b_bead)
+            if f_r * f_b * f_g > 0 and 0.7 < (f_r + f_b + f_g) / 3 < 1:
+                center_r = np_round(ndi_center_of_mass(r_bead_uint16), 3) + [x - 1, y - 1] + [0.5, 0.5]
+                center_g = np_round(ndi_center_of_mass(g_bead_uint16), 3) + [x - 1, y - 1] + [0.5, 0.5]
+                center_b = np_round(ndi_center_of_mass(b_bead_uint16), 3) + [x - 1, y - 1] + [0.5, 0.5]
+                center_mass.append([center_r, center_g, center_b])
+        center_mass = np_array(center_mass)
+        if center_mass.shape[0] == 0:
+            center_mass = []
+            bgst = False
+        else:
+            break
+
     if center_mass.shape[0] == 0:
         raise Exception("Beads not found.")
 
