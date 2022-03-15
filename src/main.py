@@ -110,7 +110,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_beadscsv_browse.clicked.connect(self.open_beads_csv_file)
         self.ui.btn_target_csv_browser.clicked.connect(self.open_target_file)
 
-        self.ui.btn_csv_clear.clicked.connect(self.clear_target_csv_path)
+        self.ui.btn_csv_clear.clicked.connect(lambda x: self.ui.target_csv_path.clear())
         self.ui.btn_save_beads_map.clicked.connect(self.save_beads_map)
 
         # text change
@@ -211,6 +211,7 @@ class MainWindow(QMainWindow):
             self.correction.append_text.connect(self.update_message)
             self.correction.update_progress.connect(self.update_process)
             self.correction.train_beads_finished.connect(self.show_vector_map)
+            self.correction.pipeline_error.connect(lambda x: self.ui.btn_start.setEnabled(True))
 
             self.thread.start()
             self.start_backgroung_work.emit()
@@ -238,9 +239,6 @@ class MainWindow(QMainWindow):
 
     def open_target_file(self):
         open_file_dialog(self.ui.target_csv_path, mode=3, filetype_list=["csv", "xlsx", "xls"])
-
-    def clear_target_csv_path(self):
-        self.ui.target_csv_path.clear()
 
     def check_identifier(self):
         # Check identifier for each image folder
