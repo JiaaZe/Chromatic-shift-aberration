@@ -266,7 +266,8 @@ def get_beads_df(beads_path_list, bgst=True):
     bead_g_uint8, bead_g_c3, bead_g_opening = get_opening(bead_g_bgst)
     bead_b_uint8, bead_b_c3, bead_b_opening = get_opening(bead_b_bgst)
 
-    bgst_composited_uint8_c3 = np_dstack((bead_r_uint8, bead_g_uint8, bead_b_uint8))
+        bgst_composited_uint8_c3 = np_dstack((bead_r_uint8, bead_g_uint8, bead_b_uint8))
+        bgst_composited_uint16_c3 = np_dstack((bead_r_bgst, bead_g_bgst, bead_b_bgst))
 
     h, w = bead_r_opening.shape
     composited_c1 = np_zeros_like(bead_r_opening)
@@ -301,10 +302,11 @@ def get_beads_df(beads_path_list, bgst=True):
         if abs(w - h) > 2:
             continue
 
-        select_bead = bgst_composited_uint8_c3[x - 1:x + w + 1, y - 1:y + h + 1]
-
-        new_contours = contour_np - [x - 1, y - 1]
-        select_bead, _ = clean_contours(select_bead, new_contours)
+            select_bead = bgst_composited_uint8_c3[x - 1:x + w + 1, y - 1:y + h + 1]
+            select_bead_uint16 = bgst_composited_uint16_c3[x - 1:x + w + 1, y - 1:y + h + 1]
+            new_contours = contour_np - [x - 1, y - 1]
+            select_bead, _ = clean_contours(select_bead, new_contours)
+            select_bead_uint16, _ = clean_contours(select_bead_uint16, new_contours)
 
         r_bead = select_bead[:, :, 0]
         g_bead = select_bead[:, :, 1]
@@ -322,10 +324,10 @@ def get_beads_df(beads_path_list, bgst=True):
     X_red = np_array(center_mass[:, 0, :])
     X_green = np_array(center_mass[:, 1, :])
     X_blue = np_array(center_mass[:, 2, :])
-    beads_df = pd_DataFrame({'red_y': X_red[:, 1],
-                             'red_x': X_red[:, 0],
-                             'green_y': X_green[:, 1],
-                             'green_x': X_green[:, 0],
-                             'blue_y': X_blue[:, 1],
-                             'blue_x': X_blue[:, 0]})
+    beads_df = pd_DataFrame({'red_y': X_red[:, 0],
+                             'red_x': X_red[:, 1],
+                             'green_y': X_green[:, 0],
+                             'green_x': X_green[:, 1],
+                             'blue_y': X_blue[:, 0],
+                             'blue_x': X_blue[:, 1]})
     return beads_df

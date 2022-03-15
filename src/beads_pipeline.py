@@ -64,7 +64,7 @@ class Correction(QObject):
                         elif self.idenifier[2] in filename:
                             beads_blue_path = os_path_join(folder, file_list[i])
                     beads_tif_path_list = [beads_red_path, beads_green_path, beads_blue_path]
-                    one_beads_df = get_beads_df(beads_tif_path_list, bgst=False)
+                    one_beads_df = get_beads_df(beads_tif_path_list, bgst=True)
                     beads_df = pd_concat([beads_df, one_beads_df], ignore_index=True)
                     finished = "==" * (j + 1)
                     left = ".." * (num_beads_folders - j - 1)
