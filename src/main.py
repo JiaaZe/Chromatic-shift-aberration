@@ -153,6 +153,7 @@ class MainWindow(QMainWindow):
             beads_folders_path = self.ui.beads_folder_path.toPlainText()
             beads_csv_path = self.ui.beads_csv_path.text()
             target_cm_path = self.ui.target_csv_path.text()
+            identifier_list = []
             if len(beads_csv_path) > 0:
                 msg = "Using beads csv file to train the model."
                 self.logger.info(msg)
@@ -161,6 +162,14 @@ class MainWindow(QMainWindow):
                 msg = "Using beads images to train the model."
                 self.logger.info(msg)
                 self.update_message(msg)
+
+                # check identifiers.
+                identifier_list = self.check_identifier()
+                self.cfg['parameters']['red_bgst_identifier'] = identifier_list[0]
+                self.cfg['parameters']['green_bgst_identifier'] = identifier_list[1]
+                self.cfg['parameters']['blue_bgst_identifier'] = identifier_list[2]
+                with open(config_file, 'w') as configfile:
+                    self.cfg.write(configfile)
             else:
                 msg = "Invalid beads path."
                 raise Exception(msg)
@@ -176,13 +185,7 @@ class MainWindow(QMainWindow):
                 shape_msg += "Please input beads image height."
             if len(shape_msg) > 0:
                 raise Exception(shape_msg)
-            identifier_list = self.check_identifier()
-            self.cfg['parameters']['red_bgst_identifier'] = identifier_list[0]
-            self.cfg['parameters']['green_bgst_identifier'] = identifier_list[1]
-            self.cfg['parameters']['blue_bgst_identifier'] = identifier_list[2]
-            with open(config_file, 'w') as configfile:
-                self.cfg.write(configfile)
-            # path_list = [beads_red_path, beads_green_path, beads_blue_path, beads_csv_path, target_cm_path]
+
             path_list = [beads_folders_path, beads_csv_path, target_cm_path]
 
             # reuse the old beads lr model
