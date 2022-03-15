@@ -129,13 +129,14 @@ class Correction(QObject):
             self.train_model()
             self.train_beads_finished.emit(1)
 
-            # correct taget center of mass csv
-            self.corrected_centerOfMass = self.shift_centerOfMass()
-            self.correction_finished.emit(1)
+            if len(self.target_csv_path_list[0]) > 0:
+                # correct taget center of mass csv
+                self.corrected_centerOfMass = self.shift_centerOfMass()
+                self.correction_finished.emit(1)
 
-            # save corrected center of mass into csv
-            self.save_corrected_centerOfMass()
-            self.save_correction_finished.emit(1)
+                # save corrected center of mass into csv
+                self.save_corrected_centerOfMass()
+                self.save_correction_finished.emit(1)
         except Exception as e:
             self.logger.error("{}".format(e))
             self.append_text.emit("{}".format(e))
