@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-
+# pyinstaller --noconfirm --distpath ./exe --workpath ./exe/build Chromatic-shift-aberration.spec
 
 block_cipher = None
 
