@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>885</width>
-    <height>799</height>
+    <width>910</width>
+    <height>844</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,48 +26,61 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>60</height>
+        <height>70</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
         <width>16777215</width>
-        <height>60</height>
+        <height>70</height>
        </size>
       </property>
       <property name="title">
        <string>Beads CSV</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="1">
-        <widget class="QLineEdit" name="beads_csv_path">
-         <property name="inputMask">
-          <string/>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="dragEnabled">
-          <bool>false</bool>
-         </property>
-         <property name="placeholderText">
-          <string>Select beads csv file path</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QPushButton" name="btn_beadscsv_browse">
-         <property name="text">
-          <string>Browse</string>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="0">
-        <widget class="QLabel" name="label_7">
-         <property name="text">
-          <string>Beads CSV file </string>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <property name="topMargin">
+          <number>3</number>
          </property>
-        </widget>
+         <property name="rightMargin">
+          <number>3</number>
+         </property>
+         <property name="bottomMargin">
+          <number>3</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>Beads CSV file </string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="beads_csv_path">
+           <property name="inputMask">
+            <string/>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="dragEnabled">
+            <bool>false</bool>
+           </property>
+           <property name="placeholderText">
+            <string>Select beads csv file path</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_beadscsv_browse">
+           <property name="text">
+            <string>Browse</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
@@ -83,38 +96,38 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>80</height>
+        <height>70</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
         <width>16777215</width>
-        <height>80</height>
+        <height>70</height>
        </size>
       </property>
       <property name="title">
        <string>Center of mass csv files</string>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_3">
+      <layout class="QGridLayout" name="gridLayout_5">
        <property name="topMargin">
         <number>4</number>
        </property>
        <property name="bottomMargin">
         <number>4</number>
        </property>
-       <item>
+       <item row="0" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <property name="leftMargin">
           <number>0</number>
          </property>
          <property name="topMargin">
-          <number>5</number>
+          <number>3</number>
          </property>
          <property name="rightMargin">
-          <number>5</number>
+          <number>3</number>
          </property>
          <property name="bottomMargin">
-          <number>5</number>
+          <number>3</number>
          </property>
          <item>
           <widget class="QLineEdit" name="target_csv_path">
@@ -259,8 +272,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>774</width>
-             <height>330</height>
+             <width>799</width>
+             <height>365</height>
             </rect>
            </property>
           </widget>
@@ -281,13 +294,13 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>140</height>
+        <height>150</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
         <width>16777215</width>
-        <height>140</height>
+        <height>150</height>
        </size>
       </property>
       <property name="title">
@@ -344,6 +357,18 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_13">
+              <property name="minimumSize">
+               <size>
+                <width>36</width>
+                <height>22</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>36</width>
+                <height>22</height>
+               </size>
+              </property>
               <property name="text">
                <string>Height</string>
               </property>
@@ -354,13 +379,13 @@
               <property name="minimumSize">
                <size>
                 <width>60</width>
-                <height>0</height>
+                <height>22</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
                 <width>60</width>
-                <height>16777215</height>
+                <height>22</height>
                </size>
               </property>
               <property name="text">
@@ -370,6 +395,18 @@
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_19">
+              <property name="minimumSize">
+               <size>
+                <width>36</width>
+                <height>22</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>36</width>
+                <height>22</height>
+               </size>
+              </property>
               <property name="text">
                <string>Width</string>
               </property>
@@ -380,13 +417,13 @@
               <property name="minimumSize">
                <size>
                 <width>60</width>
-                <height>0</height>
+                <height>22</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
                 <width>60</width>
-                <height>16777215</height>
+                <height>22</height>
                </size>
               </property>
               <property name="text">
@@ -425,9 +462,21 @@
          </property>
          <layout class="QGridLayout" name="gridLayout_11">
           <item row="0" column="0">
-           <layout class="QFormLayout" name="formLayout_2">
+           <layout class="QGridLayout" name="gridLayout_4">
             <item row="0" column="0">
              <widget class="QLabel" name="label_9">
+              <property name="minimumSize">
+               <size>
+                <width>70</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>70</width>
+                <height>20</height>
+               </size>
+              </property>
               <property name="text">
                <string>RED-BGST</string>
               </property>
@@ -435,6 +484,24 @@
             </item>
             <item row="0" column="1">
              <widget class="QLineEdit" name="red_bgst_identifier">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>20</height>
+               </size>
+              </property>
               <property name="text">
                <string>CY3-BGST</string>
               </property>
@@ -442,6 +509,18 @@
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_10">
+              <property name="minimumSize">
+               <size>
+                <width>70</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>70</width>
+                <height>20</height>
+               </size>
+              </property>
               <property name="text">
                <string>GREEN-BGST</string>
               </property>
@@ -449,6 +528,18 @@
             </item>
             <item row="1" column="1">
              <widget class="QLineEdit" name="green_bgst_identifier">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>20</height>
+               </size>
+              </property>
               <property name="text">
                <string>GFP-BGST</string>
               </property>
@@ -456,6 +547,18 @@
             </item>
             <item row="2" column="0">
              <widget class="QLabel" name="label_11">
+              <property name="minimumSize">
+               <size>
+                <width>70</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>70</width>
+                <height>20</height>
+               </size>
+              </property>
               <property name="text">
                <string>BLUE-BGST</string>
               </property>
@@ -463,6 +566,18 @@
             </item>
             <item row="2" column="1">
              <widget class="QLineEdit" name="blue_bgst_identifier">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>20</height>
+               </size>
+              </property>
               <property name="text">
                <string>CY5-BGST</string>
               </property>
