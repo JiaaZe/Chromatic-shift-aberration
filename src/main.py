@@ -1,14 +1,15 @@
 import time
 from sys import (exit as sys_exit, argv as sys_argv)
 from configparser import ConfigParser as configparser_ConfigParser
-from os.path import (exists as os_path_exists)
-from os import (listdir as os_listdir)
+from os.path import (exists as os_path_exists, join as os_path_join)
+from os import (listdir as os_listdir, walk as os_walk)
 
 from ui.MainWindow import Ui_MainWindow
 from beads_pipeline import Correction
 import utils
 
 from PyQt5 import QtWidgets
+from PyQt5.QtGui import  QFont
 from PyQt5.QtCore import (QThread, pyqtSignal as Signal)
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QAbstractItemView, QTreeView, QListView, QLineEdit, \
     QVBoxLayout, QWidget
@@ -36,6 +37,7 @@ def open_file_dialog(lineEdit: QLineEdit, mode=1, filetype_list=[], folder=""):
     if len(folder) > 0:
         fileDialog.setDirectory(folder)
     path = ""
+    path_list = []
     if mode == 1:
         # multiple directories
         fileDialog.setFileMode(QFileDialog.Directory)
@@ -74,15 +76,15 @@ def open_file_dialog(lineEdit: QLineEdit, mode=1, filetype_list=[], folder=""):
             else:
                 lineEdit.setText(path)
     else:
-        if len(path) > 0:
+        if lineEdit is not None and len(path) > 0:
             lineEdit.setText(path)
-    return path
+    return path, path_list
 
 
 class MainWindow(QMainWindow):
     start_backgroung_work = Signal()
 
-    def __init__(self):
+    def __init__(self, newfont):
         super().__init__()
 
         self.logger = utils.get_logger("./Logs")
@@ -114,9 +116,22 @@ class MainWindow(QMainWindow):
         self.ui.btn_save_beads_map.clicked.connect(self.save_beads_map)
         self.ui.btn_export_beads.clicked.connect(self.save_beads_data)
 
+        self.listview_image_path = utils.ListBoxWidget(self.ui.beads_image_group)
+        self.listview_image_path.setDragEnabled(True)
+        self.listview_image_path.setObjectName("listview_image_path")
+        self.listview_image_path.setSelectionMode(QAbstractItemView.ContiguousSelection)
+        self.ui.horizontalLayout_4.insertWidget(1, self.listview_image_path)
+
+        self.ui.btn_beads_folders_clear.clicked.connect(lambda: self.listview_image_path.clear())
+        self.ui.btn_beads_folders_remove.clicked.connect(lambda: self.listview_image_path.remove_items())
+
         # text change
-        self.ui.beads_folder_path.textChanged.connect(self.handle_path_changed)
+        self.listview_image_path.data_changed_signal.connect(self.handle_path_changed)
+        # self.ui.beads_folder_path.textChanged.connect(self.handle_path_changed)
         self.ui.beads_csv_path.textChanged.connect(self.handle_path_changed)
+        self.ui.red_bgst_identifier.textChanged.connect(self.handle_path_changed)
+        self.ui.blue_bgst_identifier.textChanged.connect(self.handle_path_changed)
+        self.ui.green_bgst_identifier.textChanged.connect(self.handle_path_changed)
         self.ui.image_width.textChanged.connect(self.handle_img_shape_changed)
         self.ui.image_height.textChanged.connect(self.handle_img_shape_changed)
 
@@ -151,10 +166,11 @@ class MainWindow(QMainWindow):
             # beads_red_path = self.ui.beads_red_path.text()
             # beads_green_path = self.ui.beads_green_path.text()
             # beads_blue_path = self.ui.beads_blue_path.text()
-            beads_folders_path = self.ui.beads_folder_path.toPlainText()
+            beads_folders_path = self.listview_image_path.get_all()
             beads_csv_path = self.ui.beads_csv_path.text()
             target_cm_path = self.ui.target_csv_path.text()
             identifier_list = []
+            beads_folders_list = []
             if len(beads_csv_path) > 0:
                 msg = "Using beads csv file to train the model."
                 self.logger.info(msg)
@@ -165,7 +181,9 @@ class MainWindow(QMainWindow):
                 self.update_message(msg)
 
                 # check identifiers.
-                identifier_list = self.check_identifier()
+                identifier_list, beads_folders_list = self.check_identifier()
+                if len(beads_folders_list) == 0:
+                    raise Exception("No beads folder found. Check the identifiers.")
                 self.cfg['parameters']['red_bgst_identifier'] = identifier_list[0]
                 self.cfg['parameters']['green_bgst_identifier'] = identifier_list[1]
                 self.cfg['parameters']['blue_bgst_identifier'] = identifier_list[2]
@@ -187,7 +205,7 @@ class MainWindow(QMainWindow):
             if len(shape_msg) > 0:
                 raise Exception(shape_msg)
 
-            path_list = [beads_folders_path, beads_csv_path, target_cm_path]
+            path_list = [beads_folders_list, beads_csv_path, target_cm_path]
 
             # reuse the old beads lr model
             if self.reuse:
@@ -236,7 +254,10 @@ class MainWindow(QMainWindow):
         self.ui.textbrowser_process.setText("\n".join(cur_text_list))
 
     def open_beads_folder(self):
-        open_file_dialog(self.ui.beads_folder_path, mode=1)
+        _, path_list = open_file_dialog(lineEdit=None, mode=1)
+        if len(path_list) > 0:
+            self.listview_image_path.addItems(path_list)
+            self.handle_path_changed()
 
     def open_beads_csv_file(self):
         open_file_dialog(self.ui.beads_csv_path, mode=2, filetype_list=["csv", "xlsx", "xls"])
@@ -246,32 +267,59 @@ class MainWindow(QMainWindow):
 
     def check_identifier(self):
         # Check identifier for each image folder
+        msg = ""
         err_msg = ""
         try:
             bgst_identifier = [self.ui.red_bgst_identifier.text().upper(), self.ui.green_bgst_identifier.text().upper(),
                                self.ui.blue_bgst_identifier.text().upper()]
-            folder_list = self.ui.beads_folder_path.toPlainText().split(";")
+            folder_list = self.listview_image_path.get_all()
+            beads_folder_list = []
             for folder in folder_list:
-                bgst_identifier_flag = [0, 0, 0]
-                file_list = os_listdir(folder)
-                for file_name in file_list:
-                    file_name = file_name.upper()
-                    if not file_name.endswith(".TIF"):
+                for root, dirs, files in os_walk(folder, topdown=False):
+                    if len(files) == 0:
                         continue
-                    for i in range(3):
-                        if bgst_identifier[i] in file_name \
-                                and bgst_identifier[(i - 2) % 3] not in file_name \
-                                and bgst_identifier[(i - 1) % 3] not in file_name:
-                            bgst_identifier_flag[i] = bgst_identifier_flag[i] + 1
-                if sum(bgst_identifier_flag) != 3:
-                    err_msg += "BGST identifier can not identify channel images in the folder: {}\n".format(folder)
+                    beads_red_path = ""
+                    beads_green_path = ""
+                    beads_blue_path = ""
+                    for i, filename in enumerate(files):
+                        filename = filename.upper()
+                        if not filename.endswith(".TIF"):
+                            continue
+                        if bgst_identifier[0] in filename:
+                            if beads_red_path != "":
+                                err_msg += "Red Identifier [{}] appears more than once in folder {}.\n".format(
+                                    bgst_identifier[0], root)
+                            beads_red_path = os_path_join(root, filename)
+                        elif bgst_identifier[1] in filename:
+                            if beads_green_path != "":
+                                err_msg += "Green Identifier [{}] appears more than once in folder {}.\n".format(
+                                    bgst_identifier[1], root)
+                            beads_green_path = os_path_join(root, filename)
+                        elif bgst_identifier[2] in filename:
+                            if beads_blue_path != "":
+                                err_msg += "Blue Identifier [{}] appears more than once in folder {}.\n".format(
+                                    bgst_identifier[2], root)
+                            beads_blue_path = os_path_join(root, filename)
+                        if len(beads_red_path) > 0 and len(beads_green_path) > 0 and len(beads_blue_path) > 0:
+                            break
+                    if len(beads_red_path) == 0 or len(beads_green_path) == 0 or len(beads_blue_path) == 0:
+                        msg += "[SKIP] Not enough beads images in the folder: {}\n".format(
+                            root)
+                        continue
+                    beads_folder_list.append([beads_red_path, beads_green_path, beads_blue_path])
+
+                if err_msg != "":
+                    self.logger.error(err_msg)
+                    self.update_message(err_msg)
+                else:
+                    msg += "Found {} beads folders.".format(len(beads_folder_list))
+                    self.logger.info(msg)
+                    self.update_message(msg)
         except Exception as e:
             msg = "Error when Check identifier: {}".format(e)
             self.logger.error(msg)
             self.update_message(msg)
-        if len(err_msg) > 0:
-            raise Exception(err_msg)
-        return bgst_identifier
+        return bgst_identifier, beads_folder_list
 
     def show_vector_map(self):
         try:
@@ -605,6 +653,13 @@ class MainWindow(QMainWindow):
 # Main access
 if __name__ == '__main__':
     app = QApplication(sys_argv)
-    window = MainWindow()
+    # 100% 96
+    # 125% 120
+    # 150% 144
+    ratio = app.primaryScreen().logicalDotsPerInch() / 96
+    new_font_size = 9 / ratio + 0.5
+    newFont = QFont("Segoe UI", new_font_size)
+    app.setFont(newFont)
+    window = MainWindow(newFont)
     window.show()
     sys_exit(app.exec())

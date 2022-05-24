@@ -1,9 +1,9 @@
 import logging
+import os
 
 from PyQt5.QtCore import (pyqtSignal as Signal, QObject)
 from os.path import (split as os_path_split, join as os_path_join, exists as os_path_exists,
                      splitext as os_path_splitext)
-from os import (listdir as os_listdir)
 from beads_processing import train_beads, get_beads_df
 from pandas import (read_csv as pd_read_csv, concat as pd_concat)
 from numpy import (array as np_array, round as np_round)
@@ -21,7 +21,7 @@ class Correction(QObject):
     def __init__(self, logger: logging.Logger, path_list: list, lr_model: list, bgst_identifier: list):
         super().__init__()
         self.logger = logger
-        self.beads_folder_list = path_list[0].split(";")
+        self.beads_folder_list = path_list[0]
         self.beads_csv_path = path_list[1]
         self.target_csv_path_list = path_list[2].split(";")
         self.idenifier = bgst_identifier
@@ -49,32 +49,19 @@ class Correction(QObject):
             else:
                 beads_df = None
                 num_beads_folders = len(self.beads_folder_list)
-                for j, folder in enumerate(self.beads_folder_list):
-                    file_list = os_listdir(folder)
-                    beads_red_path = ""
-                    beads_green_path = ""
-                    beads_blue_path = ""
-                    for i, filename in enumerate(file_list):
-                        filename = filename.upper()
-                        if not filename.endswith(".TIF"):
-                            continue
-                        if self.idenifier[0] in filename:
-                            beads_red_path = os_path_join(folder, file_list[i])
-                        elif self.idenifier[1] in filename:
-                            beads_green_path = os_path_join(folder, file_list[i])
-                        elif self.idenifier[2] in filename:
-                            beads_blue_path = os_path_join(folder, file_list[i])
-                    beads_tif_path_list = [beads_red_path, beads_green_path, beads_blue_path]
-                    one_beads_df, flag = get_beads_df(beads_tif_path_list, bgst=True)
+                for j, beads_tif_path in enumerate(self.beads_folder_list):
+                    one_beads_df, flag = get_beads_df(beads_tif_path, bgst=True)
                     if not flag:
-                        self.logger.info("When process input image, no beads found. Try background subtraction.")
-                        one_beads_df, flag = get_beads_df(beads_tif_path_list, bgst=False)
+                        self.logger.info(
+                            "When process input image, no beads found. Try background subtraction.")
+                        one_beads_df, flag = get_beads_df(beads_tif_path, bgst=False)
                         if not flag:
                             raise Exception("After background subtraction, no beads found.")
                     beads_df = pd_concat([beads_df, one_beads_df], ignore_index=True)
                     finished = "==" * (j + 1)
                     left = ".." * (num_beads_folders - j - 1)
-                    progress_text = "Process beads images: {}/{} [{}>{}] ".format(j + 1, num_beads_folders, finished, left)
+                    progress_text = "Process beads images: {}/{} [{}>{}] ".format(j + 1, num_beads_folders, finished,
+                                                                                  left)
                     if j == 0:
                         self.append_text.emit(progress_text)
                     else:
