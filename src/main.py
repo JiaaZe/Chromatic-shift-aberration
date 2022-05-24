@@ -12,7 +12,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import (QThread, pyqtSignal as Signal)
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QAbstractItemView, QTreeView, QListView, QLineEdit, \
     QVBoxLayout, QWidget
-from pandas import (DataFrame as pd_DataFrame)
+from pandas import (DataFrame as pd_DataFrame, ExcelWriter as pd_ExcelWriter)
 from numpy import (arange as np_arange)
 
 from matplotlib.backends.backend_qtagg import (
@@ -112,6 +112,7 @@ class MainWindow(QMainWindow):
 
         self.ui.btn_csv_clear.clicked.connect(lambda x: self.ui.target_csv_path.clear())
         self.ui.btn_save_beads_map.clicked.connect(self.save_beads_map)
+        self.ui.btn_export_beads.clicked.connect(self.save_beads_data)
 
         # text change
         self.ui.beads_folder_path.textChanged.connect(self.handle_path_changed)
@@ -312,13 +313,13 @@ class MainWindow(QMainWindow):
             subplot_axes[0, 0].title.set_size(10)
 
             x_lim = (min(beads_df["red_x"].min(), (beads_df["red_x"] + arrow_df['diff_green_x']).min(),
-                         (beads_df["red_x"] + arrow_df['diff_blue_x']).min()) - 10,
+                         (beads_df["red_x"] + arrow_df['diff_blue_x']).min(), 0) - 10,
                      max(beads_df["red_x"].max(), (beads_df["red_x"] + arrow_df['diff_green_x']).max(),
-                         (beads_df["red_x"] + arrow_df['diff_blue_x']).max()) + 10)
+                         (beads_df["red_x"] + arrow_df['diff_blue_x']).max(), img_shape[0]) + 10)
             y_lim = (min(beads_df["red_y"].min(), (beads_df["red_y"] + arrow_df['diff_green_y']).min(),
-                         (beads_df["red_y"] + arrow_df['diff_blue_y']).min()) - 10,
+                         (beads_df["red_y"] + arrow_df['diff_blue_y']).min(), 0) - 10,
                      max(beads_df["red_y"].max(), (beads_df["red_y"] + arrow_df['diff_green_y']).max(),
-                         (beads_df["red_y"] + arrow_df['diff_blue_y']).max()) + 10)
+                         (beads_df["red_y"] + arrow_df['diff_blue_y']).max(), img_shape[1]) + 10)
             subplot_axes[0, 0].set_xlim(x_lim)
 
             subplot_axes[0, 0].set_ylim(y_lim)
@@ -556,6 +557,30 @@ class MainWindow(QMainWindow):
             self.ui.btn_start.setEnabled(True)
             msg = "Error when show beads vector maps: {}".format(e)
             self.logger.error(msg)
+            self.update_message(msg)
+
+    def save_beads_data(self):
+        try:
+            save_path, save_type = QFileDialog.getSaveFileName(self, "Save File", "./corrected beads",
+                                                               'xlsx (*.xlsx)')
+            if save_type == "xlsx (*.xlsx)":
+                beads_df, pred_beads = self.old_beads_vector
+                with pd_ExcelWriter(save_path) as writer:
+                    beads_df_tmp = beads_df[["red_x", "red_y", "green_x", "green_y", "blue_x", "blue_y"]]
+                    pred_beads_tmp = pred_beads[["red_x", "red_y", "green_x", "green_y", "blue_x", "blue_y"]]
+                    beads_df_tmp.to_excel(writer, index=False, header=False, encoding="utf-8",
+                                          sheet_name='original beads')
+                    pred_beads_tmp.to_excel(writer, index=False, header=False, encoding="utf-8",
+                                            sheet_name='corrected beads')
+            else:
+                return
+        except Exception as e:
+            msg = "Error when export the beads data: {}".format(e)
+            self.logger.error(msg)
+            self.update_message(msg)
+        else:
+            msg = "Beads data exported as {}".format(save_path)
+            self.logger.info(msg)
             self.update_message(msg)
 
     def save_beads_map(self):
