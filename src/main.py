@@ -270,11 +270,12 @@ class MainWindow(QMainWindow):
         # Check identifier for each image folder
         msg = ""
         err_msg = ""
+        bgst_identifier = []
+        beads_folder_list = []
         try:
             bgst_identifier = [self.ui.red_bgst_identifier.text().upper(), self.ui.green_bgst_identifier.text().upper(),
                                self.ui.blue_bgst_identifier.text().upper()]
             folder_list = self.listview_image_path.get_all()
-            beads_folder_list = []
             for folder in folder_list:
                 for root, dirs, files in os_walk(folder, topdown=False):
                     if len(files) == 0:
@@ -313,9 +314,12 @@ class MainWindow(QMainWindow):
                     self.logger.error(err_msg)
                     self.update_message(err_msg)
                 else:
-                    msg += "Found {} beads folders.".format(len(beads_folder_list))
+                    msg = "Found {} beads folders.".format(len(beads_folder_list))
                     self.logger.info(msg)
-                    self.update_message(msg)
+                    if len(beads_folder_list) == 1:
+                        self.update_message(msg)
+                    else:
+                        self.update_process(msg)
         except Exception as e:
             msg = "Error when Check identifier: {}".format(e)
             self.logger.error(msg)
