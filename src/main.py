@@ -9,7 +9,7 @@ from beads_pipeline import Correction
 import utils
 
 from PyQt5 import QtWidgets
-from PyQt5.QtGui import  QFont
+from PyQt5.QtGui import QFont
 from PyQt5.QtCore import (QThread, pyqtSignal as Signal)
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QAbstractItemView, QTreeView, QListView, QLineEdit, \
     QVBoxLayout, QWidget
@@ -157,6 +157,7 @@ class MainWindow(QMainWindow):
 
     def start_pipeline(self):
         self.ui.btn_start.setDisabled(True)
+        self.ui.textbrowser_process.clear()
         try:
             msg = "[{}]===========Start pipeline============".format(
                 time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
