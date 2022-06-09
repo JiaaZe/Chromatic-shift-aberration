@@ -1,7 +1,9 @@
 import logging
+import platform
+import subprocess
 from logging.handlers import TimedRotatingFileHandler
 from os.path import (exists as os_path_exists)
-from os import (mkdir as os_mkdir)
+from os import (mkdir as os_mkdir, startfile as os_startfile)
 from pandas import (DataFrame as pd_DataFrame)
 
 from PyQt5.QtCore import Qt
@@ -96,3 +98,11 @@ class ListBoxWidget(QListWidget):
         self.data_changed_signal.emit(1)
         super(ListBoxWidget, self).clear()
 
+
+def open_folder_func(folder_path):
+    # open saved folder.
+    systemType = platform.platform()
+    if "mac" in systemType:
+        subprocess.call(["open", folder_path])
+    else:
+        os_startfile(folder_path)

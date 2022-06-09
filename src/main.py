@@ -1,7 +1,7 @@
 import time
 from sys import (exit as sys_exit, argv as sys_argv)
 from configparser import ConfigParser as configparser_ConfigParser
-from os.path import (exists as os_path_exists, join as os_path_join)
+from os.path import (exists as os_path_exists, join as os_path_join, split as os_path_split)
 from os import (listdir as os_listdir, walk as os_walk)
 
 from ui.MainWindow import Ui_MainWindow
@@ -218,10 +218,12 @@ class MainWindow(QMainWindow):
                 self.ui.scroll_beads_content = QtWidgets.QWidget()
                 self.ui.scroll_beads.setWidget(self.ui.scroll_beads_content)
                 self.ui.btn_save_beads_map.setDisabled(True)
+                self.ui.btn_export_beads.setDisabled(True)
             if self.img_shape_changed:
                 self.ui.scroll_beads_content = QtWidgets.QWidget()
                 self.ui.scroll_beads.setWidget(self.ui.scroll_beads_content)
                 self.ui.btn_save_beads_map.setDisabled(True)
+                self.ui.btn_export_beads.setDisabled(True)
 
             if self.thread is not None:
                 self.thread.terminate()
@@ -605,6 +607,7 @@ class MainWindow(QMainWindow):
 
             self.ui.scroll_beads_content.show()
             self.ui.btn_save_beads_map.setEnabled(True)
+            self.ui.btn_export_beads.setEnabled(True)
             self.ui.btn_start.setEnabled(True)
         except Exception as e:
             self.ui.btn_start.setEnabled(True)
@@ -633,6 +636,7 @@ class MainWindow(QMainWindow):
             self.update_message(msg)
         else:
             msg = "Beads data exported as {}".format(save_path)
+            utils.open_folder_func(os_path_split(save_path)[0])
             self.logger.info(msg)
             self.update_message(msg)
 
@@ -651,6 +655,7 @@ class MainWindow(QMainWindow):
             self.update_message(msg)
         else:
             msg = "Beads vector maps saved as {}".format(save_path)
+            utils.open_folder_func(os_path_split(save_path)[0])
             self.logger.info(msg)
             self.update_message(msg)
 
